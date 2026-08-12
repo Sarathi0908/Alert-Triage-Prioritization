@@ -1,0 +1,50 @@
+# Drift monitoring — Alert Triage (SOC #01, P0), CSE-CIC-IDS2018 NetFlow variant.
+# Plan §6: PSI + score-shift + FN. Paths under _infra/ resolve only when this slot
+# sits inside a checkout that has the shared platform (see src/config.py `infra`).
+model: soc/01_p0_alert_triage/CICIDS_lightgbm
+
+feature_drift:
+  monitor: _infra/mlops/monitoring_drift/drift_detection/psi_monitor.py
+  psi:
+    warn: 0.10                 # population stability index per feature
+    alert: 0.25                # retrain trigger
+  top_features:                # the model's highest-gain signals — watch closely
+    - L4_DST_PORT              # service mix shifts whenever the estate changes
+    - SRC_TO_DST_AVG_THROUGHPUT
+    - FLOW_DURATION_MILLISECONDS
+    - MIN_TTL                  # shifts on routing/topology change, not on attacks
+
+score_distribution:
+  monitor: _infra/mlops/monitoring_drift/drift_detection/score_distribution_monitor.py
+  # Attack-score distributions drift across time-slices; alert when the served
+  # distribution diverges from the training baseline stored in the model bundle
+  # (p_grid), which is what the priority percentiles are computed against.
+  shift_alert_psi: 0.20
+  # The priority blend interpolates against p_grid/vol_grid from training. If the
+  # volume distribution moves, priority ranking degrades before probability does.
+  volume_grid_shift_alert_psi: 0.20
+
+performance:
+  fn_rate:
+    monitor: _infra/mlops/monitoring_drift/performance_monitoring/fn_rate_monitor.py
+    target_max: 0.050          # FN on confirmed attacks (configs/model_config.yaml acceptance)
+  precision_at_operating_point:
+    # The threshold is fitted to hold >=70% precision. If served precision falls
+    # below the floor the operating point is stale -> re-fit the threshold.
+    floor: 0.70
+  pr_auc:
+    monitor: _infra/mlops/monitoring_drift/performance_monitoring/pr_auc_tracker.py
+    floor: 0.90
+  per_class_recall:
+    # A class-level collapse hides inside a healthy aggregate: watch the weakest
+    # attack classes individually (outputs/per_class_metrics.csv).
+    min_recall_any_class: 0.50
+
+alerting:
+  channel: _infra/mlops/monitoring_drift/alerting/pagerduty_integration.py
+
+hitl:
+  # Deployment threshold is calibrated in shadow mode before automation.
+  shadow_mode_required: true
+  audit_sampler: _infra/mlops/hitl/audit_sampling/audit_sampler.py
+  audit_sample_rate: 0.02      # matches configs/serving_config.yaml routing

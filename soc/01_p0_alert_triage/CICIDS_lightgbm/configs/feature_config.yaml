@@ -1,0 +1,76 @@
+# =============================================================================
+# feature_config.yaml  —  Alert Triage feature screening (CSE-CIC-IDS2018)
+# Drives src/features/feature_screener.py. No magic numbers in code (§5).
+#
+# RULE: the model consumes NATIVE NetFlow measurements only — no derived or
+# transformed features. A /score request body therefore maps 1:1 onto the model's
+# inputs with no hidden derivation.
+# =============================================================================
+
+# Columns dropped before screening even starts. Identity/ephemeral/random fields
+# are removed at dataset-build time (data/build_ids2018_dataset.py DROP list);
+# these are the additional by-hand exclusions.
+exclude:
+  - DURATION_IN     # redundant with FLOW_DURATION_MILLISECONDS
+  - DURATION_OUT    # redundant, and single-feature AUC 0.93 (near-leak)
+
+screen:
+  # Screening runs on a random subsample — the full table is far larger than the
+  # screen needs, and the decision is distributional.
+  sample_rows: 1500000
+
+  # NOISE (a): near-constant — one value, or almost all zero -> no information.
+  near_constant:
+    max_unique: 1
+    max_zero_frac: 0.999
+  # LEAK: a single column that ALONE almost perfectly separates the classes is a
+  # flaw in the data, not behaviour the model should learn.
+  leak:
+    single_feature_auc_min: 0.999
+  # NOISE (b): redundancy — two columns carrying the same signal; keep the one
+  # with the higher LightGBM gain.
+  redundancy:
+    abs_corr_max: 0.95
+
+  # Screening fit — a cheap forest used only to rank/tie-break, not the final model.
+  ranker:
+    n_estimators: 200
+    num_leaves: 48
+    min_child_samples: 200
+    learning_rate: 0.08
+
+  # DOMINANCE screen: no single feature may hold more than `gain_cap_pct` of the
+  # total gain (a dominator is a memorisation/leak risk), and a kept feature must
+  # carry at least `gain_floor_pct` (below that it is dead weight). Drop the top
+  # dominator and refit, at most `max_dominant_drops` times — cascading further
+  # guts the model.
+  balance:
+    gain_cap_pct: 45.0
+    gain_floor_pct: 1.5
+    max_dominant_drops: 2
+    min_pool_size: 8             # stop dropping once the pool is this small
+    min_selected: 5              # always keep at least the strongest N
+
+# Behavioural family of each feature, by the first matching substring group.
+# Used for coverage reporting so every attack pattern (scan / DoS / brute-force /
+# web / exfil) keeps at least one feature it can be detected by.
+families:
+  rate:          [throughput, second_bytes, "/s"]
+  window:        [win]
+  tcp-flags:     [flag]
+  timing:        [duration, iat, active, idle]
+  service:       [port, proto]
+  protocol-meta: [ttl, icmp, dns, ftp]
+  retransmit:    [retransmit]
+  packet-size:   [num_pkts, flow_pkt, ip_pkt_len, "packet length", "packet size"]
+  volume:        [byte, length, pkt, packet, subflow]
+  header:        [header, seg_size, act_data]
+  ratio:         [ratio]
+default_family: other
+
+# Drives src/evaluation/eda_report.py (exploration only — never the model).
+eda:
+  corr_sample_rows: 400000       # sample for the correlation + single-feature AUC panels
+  port_column: L4_DST_PORT       # service axis for the "attack rate by port" panel
+  top_ports: 15
+  zscore_clip: 3.0               # fingerprint heatmap colour range (± std devs)

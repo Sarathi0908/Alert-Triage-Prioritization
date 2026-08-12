@@ -1,0 +1,27 @@
+# Registry entry — SOC #01 Alert Triage & Prioritization, CSE-CIC-IDS2018 variant.
+# The authoritative card lives with the model; this is the registry pointer.
+model_id: "01_p0_alert_triage_cicids"
+name: Alert Triage & Prioritization — CSE-CIC-IDS2018 (LightGBM)
+domain: SOC
+priority: P0
+slot: soc/01_p0_alert_triage/CICIDS_lightgbm
+card: soc/01_p0_alert_triage/CICIDS_lightgbm/mlops/model_card.yaml
+status: benchmark        # public NetFlow benchmark build, not org telemetry
+
+summary: >
+  Supervised LightGBM over 5 leak/noise-screened native NetFlow features. Emits an
+  attack probability, a 0-100 priority over predicted alerts only, and an
+  ALERT/NORMAL verdict; the backend routes NORMAL to the Data Lake and ALERT to the
+  analyst priority queue.
+
+headline_metrics:        # held-out 30% — see the slot card for the full set
+  roc_auc: 0.9922
+  pr_auc: 0.9864
+  precision: 0.7003
+  recall: 0.9821
+  fn_rate: 0.01792
+  alert_reduction: 0.6861
+
+acceptance: PASS         # gates in configs/model_config.yaml, enforced in tests/
+reproduce: py src/pipeline.py
+serving: src/serving/api.py (FastAPI, port 8081)

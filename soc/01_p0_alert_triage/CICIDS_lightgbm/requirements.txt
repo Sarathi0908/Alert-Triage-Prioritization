@@ -1,0 +1,57 @@
+# =============================================================================
+# Alert Triage & Prioritization (#01) — LightGBM on CSE-CIC-IDS2018 (NetFlow)
+#
+# Derived from the actual imports of this slot (src/**, data/**), not copied from
+# a sibling model. Pinned to the versions verified on 2026-08-12, Python 3.14.2.
+# Install:  pip install -r requirements.txt
+#
+# Deliberately ABSENT, and why:
+#   shap      — explainability uses LightGBM's own `pred_contrib=True` (exact tree
+#               SHAP, already in the booster). No separate shap package is imported.
+#   flask     — the serving layer is FastAPI (src/serving/api.py), not Flask.
+#   seaborn   — no module imports it; the charts are plain matplotlib + the shared
+#               style in src/evaluation/plots.py.
+# =============================================================================
+
+# --- core: model training + inference ---------------------------------------
+lightgbm==4.6.0
+scikit-learn==1.9.0
+pandas==2.3.3
+numpy==2.4.6
+scipy==1.18.0
+
+# --- data: the merged NetFlow table is parquet -------------------------------
+# Required, not optional: pandas.read_parquet has no engine without it and every
+# entry point loads data/ids2018_merged.parquet.
+pyarrow==24.0.0
+
+# --- model bundle persistence (outputs/lgbm_model.pkl) -----------------------
+joblib==1.5.3
+
+# --- config: configs/*.yaml drives every module ------------------------------
+PyYAML==6.0.3
+
+# --- evaluation plots (Agg backend, headless) --------------------------------
+matplotlib==3.11.0
+
+# --- serving: REST endpoint (src/serving/api.py) -----------------------------
+fastapi==0.138.1
+uvicorn==0.49.0
+pydantic==2.13.4          # FastAPI's model layer; pinned so request validation is stable
+
+# --- feature sheets (src/reporting/build_excels.py) --------------------------
+openpyxl==3.1.5
+
+# --- reporting deck (src/reporting/build_deck.py) ----------------------------
+python-pptx==1.0.2
+
+# --- tests (tests/) ----------------------------------------------------------
+pytest==9.1.1
+# fastapi.testclient needs an HTTP client. Starlette 1.3 warns that httpx 0.x is
+# deprecated in favour of httpx2; 0.28.1 still works, so it stays pinned here
+# until httpx2 is the verified default.
+httpx==0.28.1
+
+# --- notebooks (optional; only to execute notebooks/01_eda_cicids2017.ipynb) --
+# jupyter==1.1.1
+# ipykernel==7.2.0

@@ -1,0 +1,75 @@
+{
+  "features": [
+    "L4_DST_PORT",
+    "SRC_TO_DST_AVG_THROUGHPUT",
+    "FLOW_DURATION_MILLISECONDS",
+    "SRC_TO_DST_SECOND_BYTES",
+    "MIN_TTL"
+  ],
+  "n": 5,
+  "families": {
+    "L4_DST_PORT": "service",
+    "SRC_TO_DST_AVG_THROUGHPUT": "rate",
+    "FLOW_DURATION_MILLISECONDS": "timing",
+    "SRC_TO_DST_SECOND_BYTES": "rate",
+    "MIN_TTL": "protocol-meta"
+  },
+  "gain_pct": {
+    "L4_DST_PORT": 40.632,
+    "SRC_TO_DST_AVG_THROUGHPUT": 24.84,
+    "FLOW_DURATION_MILLISECONDS": 14.72,
+    "SRC_TO_DST_SECOND_BYTES": 5.99,
+    "MIN_TTL": 4.757
+  },
+  "single_feature_auc": {
+    "L4_DST_PORT": 0.7771,
+    "SRC_TO_DST_AVG_THROUGHPUT": 0.9254,
+    "FLOW_DURATION_MILLISECONDS": 0.7711,
+    "SRC_TO_DST_SECOND_BYTES": 0.7399,
+    "MIN_TTL": 0.7469
+  },
+  "removed": {
+    "near_constant_noise": [
+      "FTP_COMMAND_RET_CODE"
+    ],
+    "leak_suspect (auc>=0.999)": [],
+    "redundant_noise (|r|>0.95)": [
+      "CLIENT_TCP_FLAGS",
+      "ICMP_IPV4_TYPE",
+      "MAX_IP_PKT_LEN",
+      "MAX_TTL",
+      "NUM_PKTS_1024_TO_1514_BYTES",
+      "NUM_PKTS_UP_TO_128_BYTES",
+      "OUT_PKTS"
+    ],
+    "dominant_removed_for_balance": [
+      "TCP_WIN_MAX_IN"
+    ],
+    "low_gain_tail": [
+      "DNS_QUERY_TYPE",
+      "DNS_TTL_ANSWER",
+      "DST_TO_SRC_AVG_THROUGHPUT",
+      "DST_TO_SRC_SECOND_BYTES",
+      "ICMP_TYPE",
+      "IN_BYTES",
+      "IN_PKTS",
+      "L7_PROTO",
+      "LONGEST_FLOW_PKT",
+      "MIN_IP_PKT_LEN",
+      "NUM_PKTS_128_TO_256_BYTES",
+      "NUM_PKTS_256_TO_512_BYTES",
+      "NUM_PKTS_512_TO_1024_BYTES",
+      "OUT_BYTES",
+      "PROTOCOL",
+      "RETRANSMITTED_IN_BYTES",
+      "RETRANSMITTED_IN_PKTS",
+      "RETRANSMITTED_OUT_BYTES",
+      "RETRANSMITTED_OUT_PKTS",
+      "SERVER_TCP_FLAGS",
+      "SHORTEST_FLOW_PKT",
+      "TCP_FLAGS",
+      "TCP_WIN_MAX_OUT"
+    ]
+  },
+  "categorical": []
+}

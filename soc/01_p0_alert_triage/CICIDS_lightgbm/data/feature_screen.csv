@@ -1,0 +1,38 @@
+feature,family,unique,zero_frac,single_feature_auc,near_constant,leak_suspect,gain_pct,role
+TCP_WIN_MAX_IN,window,25126,0.1433,0.8441,False,False,58.405,DOMINANT (removed for balance)
+L4_DST_PORT,service,19656,0.0031,0.7771,False,False,18.654,SELECTED
+FLOW_DURATION_MILLISECONDS,timing,2537,0.6172,0.7711,False,False,8.085,SELECTED
+IN_PKTS,volume,4781,0.0,0.6234,False,False,4.403,low-gain tail
+TCP_WIN_MAX_OUT,window,4863,0.218,0.6503,False,False,1.416,low-gain tail
+MIN_TTL,protocol-meta,163,0.1342,0.7469,False,False,1.254,SELECTED
+MAX_TTL,protocol-meta,164,0.1342,0.748,False,False,1.018,redundant NOISE
+SERVER_TCP_FLAGS,tcp-flags,38,0.2146,0.5612,False,False,0.863,low-gain tail
+TCP_FLAGS,tcp-flags,45,0.1425,0.571,False,False,0.642,low-gain tail
+LONGEST_FLOW_PKT,packet-size,1517,0.0,0.6264,False,False,0.561,low-gain tail
+IN_BYTES,volume,21953,0.0,0.6458,False,False,0.528,low-gain tail
+L7_PROTO,service,266,0.425,0.5971,False,False,0.512,low-gain tail
+SHORTEST_FLOW_PKT,packet-size,314,0.0,0.712,False,False,0.486,low-gain tail
+SRC_TO_DST_AVG_THROUGHPUT,rate,12532,0.0025,0.9254,False,False,0.437,SELECTED
+NUM_PKTS_UP_TO_128_BYTES,packet-size,5132,0.0042,0.6411,False,False,0.372,redundant NOISE
+DST_TO_SRC_AVG_THROUGHPUT,rate,49716,0.0884,0.8539,False,False,0.364,low-gain tail
+DNS_TTL_ANSWER,protocol-meta,66,0.8758,0.5581,False,False,0.351,low-gain tail
+OUT_BYTES,volume,63837,0.0875,0.5161,False,False,0.317,low-gain tail
+CLIENT_TCP_FLAGS,tcp-flags,44,0.1425,0.5388,False,False,0.247,redundant NOISE
+SRC_TO_DST_SECOND_BYTES,rate,58024,0.0007,0.7399,False,False,0.223,SELECTED
+DST_TO_SRC_SECOND_BYTES,rate,67184,0.0875,0.638,False,False,0.171,low-gain tail
+NUM_PKTS_512_TO_1024_BYTES,packet-size,367,0.3731,0.7842,False,False,0.155,low-gain tail
+NUM_PKTS_256_TO_512_BYTES,packet-size,446,0.3141,0.7249,False,False,0.122,low-gain tail
+MIN_IP_PKT_LEN,packet-size,86,0.0875,0.7111,False,False,0.107,low-gain tail
+OUT_PKTS,volume,2436,0.0875,0.563,False,False,0.082,redundant NOISE
+NUM_PKTS_128_TO_256_BYTES,packet-size,428,0.3927,0.8505,False,False,0.067,low-gain tail
+ICMP_TYPE,protocol-meta,267,0.7297,0.5149,False,False,0.037,low-gain tail
+RETRANSMITTED_OUT_BYTES,retransmit,2796,0.8515,0.5345,False,False,0.032,low-gain tail
+DNS_QUERY_TYPE,protocol-meta,11,0.8746,0.5592,False,False,0.027,low-gain tail
+NUM_PKTS_1024_TO_1514_BYTES,packet-size,1963,0.5195,0.7834,False,False,0.025,redundant NOISE
+RETRANSMITTED_IN_BYTES,retransmit,2637,0.7317,0.5452,False,False,0.015,low-gain tail
+RETRANSMITTED_IN_PKTS,retransmit,189,0.7317,0.5085,False,False,0.013,low-gain tail
+RETRANSMITTED_OUT_PKTS,retransmit,190,0.8515,0.5245,False,False,0.007,low-gain tail
+PROTOCOL,service,6,0.0,0.5462,False,False,0.002,low-gain tail
+MAX_IP_PKT_LEN,packet-size,1517,0.0,0.6264,False,False,0.0,redundant NOISE
+ICMP_IPV4_TYPE,protocol-meta,256,0.7297,0.5149,False,False,0.0,redundant NOISE
+FTP_COMMAND_RET_CODE,protocol-meta,1,1.0,0.5,True,False,0.0,near-constant NOISE

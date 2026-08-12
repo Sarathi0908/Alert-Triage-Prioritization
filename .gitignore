@@ -1,0 +1,15 @@
+# Repo-level ignores. Each model slot adds its own (see
+# soc/01_p0_alert_triage/CICIDS_lightgbm/.gitignore) for its data and artefacts.
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Editor / OS
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini
