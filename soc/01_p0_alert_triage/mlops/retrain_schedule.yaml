@@ -1,0 +1,46 @@
+# Retrain schedule — Alert Triage (SOC #01, P0), CSE-CIC-IDS2018 NetFlow variant.
+# Plan §6: weekly retrain.
+model: soc/01_p0_alert_triage
+
+cadence:
+  schedule: weekly             # retrain as new confirmed dispositions accumulate
+  cron: "0 3 * * 1"            # Mondays 03:00 (low-traffic window)
+
+triggers:
+  - type: drift                # ad-hoc retrain on drift alarm
+    source: mlops/drift_config.yaml
+  - type: performance
+    metric: fn_rate
+    condition: "fn_rate_on_confirmed_attacks > 0.050"
+  - type: performance
+    metric: precision_at_operating_point
+    condition: "served_precision < 0.70"    # the fitted operating point has gone stale
+  - type: data_volume
+    condition: "new_labeled_flows >= 250000"
+
+# Re-screening is heavier than retraining and runs less often: the informative
+# NetFlow columns only change when the estate or the collector changes.
+rescreen_features:
+  cadence: quarterly
+  step: src/features/native_feature_screener.py
+  triggers:
+    - feature_psi_alert                     # drift_config.feature_drift.psi.alert
+    - collector_or_schema_change
+  guard: >
+    The dominance screen (configs/feature_config.yaml screen.balance) must still
+    hold: no feature above the gain cap, none below the gain floor. A newly
+    dominant feature is a leak signal, not a win — investigate before accepting.
+
+data:
+  build: data/build_ids2018_dataset.py
+  split: random stratified 70/30 (configs/model_config.yaml `split`)
+
+promotion:
+  gate: mlops/model_card.yaml#acceptance    # must pass §8 gates before promote
+  verify: py -m pytest tests -q             # the gates are executable
+  shadow_mode_required: true
+  approval: _infra/mlops/governance/model_approval_workflow.md
+
+rollback:
+  keep_last_n_models: 3
+  auto_rollback_on: [pr_auc_regression, precision_below_floor]

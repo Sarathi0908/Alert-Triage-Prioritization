@@ -1,0 +1,73 @@
+# =============================================================================
+# serving_config.yaml  —  Alert Triage online/batch scoring + routing
+#                         (CSE-CIC-IDS2018 NetFlow variant)
+# Drives src/serving/flow_triage_api.py, src/serving/siem_platform_connector.py
+# and make_postman_collection.py. The MODEL emits a probability + priority +
+# ALERT/NORMAL verdict; the BACKEND acts on it (routing NORMAL -> Data Lake,
+# ALERT -> the analyst priority queue).
+# =============================================================================
+
+scoring:
+  mode: streaming              # score on flow ingest
+  latency_budget_ms: 2000      # plan §6 (< ~2s per flow)
+  triage_score: attack_prob    # LightGBM attack probability = the primary score
+  # Cost of triaging one queued alert — converts the confusion matrix into
+  # false-positives-per-analyst-hour (src/evaluation/operating_point_validator.py).
+  analyst_minutes_per_alert: 5
+  # The alert threshold is NOT set here: it is fitted with the model (highest
+  # recall at the configured precision floor) and travels inside the bundle, so
+  # the served operating point can never drift from the evaluated one.
+  threshold_source: outputs/lgbm_model.pkl#threshold
+  missing_feature_default: 0   # absent request fields default to 0
+
+routing:
+  noise_destination: data_lake       # NORMAL flows -> cheap storage
+  alert_destination: priority_queue  # ALERT -> analyst queue -> specialised models
+  escalate_above: 0.90               # probability fast-track into the queue
+  never_autoclose_high_confidence: true   # HITL: plan §6/§10
+  audit_sample_rate: 0.02            # fraction of NORMAL sampled for audit
+
+# Per-decile tiering for the analyst queue view (plan §6). Deciles are computed
+# over PREDICTED ALERTS ONLY — normal flows are never ranked.
+decile_tiering:
+  n_deciles: 10
+  actions:
+    "10": escalate
+    "9": priority_review
+    "8": review
+  default_action: deprioritize
+  alert_deciles: [8, 9, 10]
+
+siem:                          # Splunk Risk-Based-Alerting pattern (plan §7)
+  risk_index: risk
+  score_field: triage_priority
+  # outputs/risk_index.jsonl is the analyst queue, not an audit log of every flow:
+  # export the highest-priority ALERTS only, capped. The training run logs how many
+  # alerts were produced and how many were exported, so the cap is never silent.
+  risk_index_max_records: 5000
+
+soar:
+  enabled: true
+  high_priority_queue: tier1_fast_track
+  low_priority_queue: deferred_review
+
+api:
+  host: 127.0.0.1
+  bind_host: 0.0.0.0           # what uvicorn binds when run as __main__
+  port: 8081
+  title: "Bhairava Model #01 — Alert Triage (CSE-CIC-IDS2018, native-only)"
+  version: "1.0"
+  shap_top_factors: 5          # per-response SHAP drivers returned by /score
+
+# Scenario request bodies for the generated Postman collection. Each is pulled as
+# a REAL example flow of that attack class out of the merged table.
+postman:
+  scenarios:
+    - DoS attacks-Hulk
+    - DDOS attack-HOIC
+    - DDoS attacks-LOIC-HTTP
+    - SSH-Bruteforce
+    - Infilteration
+    - Bot
+    - Benign
+  collection_name: bhairava_cse_cic_ids2018_alert_triage.postman_collection.json

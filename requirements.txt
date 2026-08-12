@@ -1,10 +1,10 @@
 # Repo-level Python dependencies. Models add extras in their own slot as needed.
 #
-# This tree carries ONE model slot — soc/01_p0_alert_triage/CICIDS_lightgbm — whose
+# This tree carries ONE model slot — soc/01_p0_alert_triage — whose
 # exact, verified pins live in that slot's own requirements.txt. Install that one
 # to run the model:
 #
-#     pip install -r soc/01_p0_alert_triage/CICIDS_lightgbm/requirements.txt
+#     pip install -r soc/01_p0_alert_triage/requirements.txt
 #
 # The floors below are the shared baseline every slot can assume.
 pandas>=2.0

@@ -4,8 +4,8 @@ model_id: "01_p0_alert_triage_cicids"
 name: Alert Triage & Prioritization — CSE-CIC-IDS2018 (LightGBM)
 domain: SOC
 priority: P0
-slot: soc/01_p0_alert_triage/CICIDS_lightgbm
-card: soc/01_p0_alert_triage/CICIDS_lightgbm/mlops/model_card.yaml
+slot: soc/01_p0_alert_triage
+card: soc/01_p0_alert_triage/mlops/model_card.yaml
 status: benchmark        # public NetFlow benchmark build, not org telemetry
 
 summary: >
@@ -24,4 +24,4 @@ headline_metrics:        # held-out 30% — see the slot card for the full set
 
 acceptance: PASS         # gates in configs/model_config.yaml, enforced in tests/
 reproduce: py src/pipeline.py
-serving: src/serving/api.py (FastAPI, port 8081)
+serving: src/serving/flow_triage_api.py (FastAPI, port 8081)

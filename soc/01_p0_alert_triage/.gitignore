@@ -1,0 +1,46 @@
+# Local training-run artefacts for the Alert Triage model (CSE-CIC-IDS2018).
+# Trained binaries + metrics/plots are logged to the model registry / MLflow,
+# not committed (instruction.md §6, "What never gets committed").
+#
+# NOTE: the files listed here ARE present in this working copy — they were copied
+# in deliberately so the slot is runnable and inspectable offline. They are still
+# ignored, because they are regenerable outputs, not source.
+outputs/
+
+# Datasets — never committed. Rebuild with:
+#   py data/build_ids2018_dataset.py     (CSE-CIC-IDS2018, the model's table)
+#   py data/build_cicids2017_dataset.py      (CICIDS2017, the second benchmark)
+data/*.parquet
+data/*.csv
+data/*.xlsx
+data/bootstrap/*
+!data/bootstrap/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+data/raw/
+
+# Committed by design (small, and they ARE the feature contract / audit):
+!data/native_selected.json
+!data/ids2018_feature_manifest.json
+!data/cicids2017_feature_manifest.json
+!data/feature_screen.csv
+
+# Internal planning document — stays on disk for local reference, never published.
+# It carries roadmap prioritisation and staffing detail that does not belong in a
+# public mirror of this slot. Ignored rather than deleted so it cannot be re-added
+# by an absent-minded `git add -A`.
+plan/
+
+# Executed-notebook byproducts (heavy PNGs + rebuilt parquet) — never committed.
+notebooks/eda_outputs/
+.ipynb_checkpoints/
+
+# Machine-specific launchers (hardcode a local Python path / port) — never
+# committed. The portable *.py equivalents ARE committed.
+start_server.bat
+test_api.cmd
+run_collection.cmd
+
+__pycache__/
+*.py[cod]
+.pytest_cache/

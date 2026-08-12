@@ -1,0 +1,97 @@
+# Model card — SOC Alert Triage & Prioritization (#01, P0)
+#              CSE-CIC-IDS2018 NetFlow variant (public-benchmark build)
+model:
+  name: Alert Triage & Prioritization — CSE-CIC-IDS2018
+  slot: soc/01_p0_alert_triage
+  domain: SOC
+  priority: P0
+  business_rank: 1
+  status: benchmark        # trained on a public NetFlow benchmark, not org telemetry
+  # The implementation plan this slot is built against is internal and is not
+  # published with the code (see .gitignore). Sections referenced below as "plan §N".
+  task: >
+    Score and rank network flows so analysts work the highest-risk traffic first.
+    A single supervised LightGBM classifier (X = native NetFlow measurements,
+    y = y_is_attack) produces an attack probability; that probability blended with
+    a traffic-volume percentile becomes a 0-100 priority over PREDICTED ALERTS ONLY.
+    The model emits score + priority + ALERT/NORMAL verdict; the BACKEND routes
+    NORMAL to the Data Lake and ALERT to the analyst priority queue.
+
+data:
+  dataset: CSE-CIC-IDS2018 (NF-v2, NetFlow) — public benchmark   # gitignored, never committed
+  build: data/build_ids2018_dataset.py (chunked read + ~27% stratified subsample)
+  grain: one row = one NetFlow record
+  rows: 738607
+  split: >
+    Random stratified 70/30 (seed 42). NOT temporal: the grain is an independent
+    flow record with no per-entity time series to leak across a cut, and the 2018
+    capture runs attack campaigns day-by-day — a temporal cut would strand whole
+    attack classes on one side and make the test unrepresentative.
+  target:
+    classifier: y_is_attack (BENIGN=0, any attack=1)
+  imbalance: 22.38% attack -> scale_pos_weight = neg/pos (~3.5), required.
+  features: 5 native NetFlow measurements (no derived, no categoricals)
+  dropped_at_build: [IPV4_SRC_ADDR, IPV4_DST_ADDR, L4_SRC_PORT, DNS_QUERY_ID]  # identity/ephemeral/random
+  leakage_excluded: >
+    attack_class is carried for per-scenario evaluation only and is never a
+    feature. DURATION_IN/DURATION_OUT excluded by hand (redundant with
+    FLOW_DURATION_MILLISECONDS; DURATION_OUT single-feature AUC 0.93 = near-leak).
+    The screen additionally removes any column whose single-feature AUC >= 0.999.
+
+features_selected:         # data/native_selected.json — screened, balanced by gain
+  - L4_DST_PORT                    # service        (gain 40.6%, solo AUC 0.78)
+  - SRC_TO_DST_AVG_THROUGHPUT      # rate           (gain 24.8%, solo AUC 0.93)
+  - FLOW_DURATION_MILLISECONDS     # timing         (gain 14.7%, solo AUC 0.77)
+  - SRC_TO_DST_SECOND_BYTES        # rate           (gain  6.0%, solo AUC 0.74)
+  - MIN_TTL                        # protocol-meta  (gain  4.8%, solo AUC 0.75)
+
+results:                   # held-out 30% — regenerated at training time -> outputs/metrics.json
+  roc_auc: 0.9922
+  pr_auc: 0.9864
+  train_roc: 0.9944
+  roc_gap: 0.0022          # small train-vs-test gap -> not overfit
+  threshold: 0.144544      # highest recall at >=70% precision (not a fixed 0.50)
+  precision: 0.7003
+  recall: 0.9821
+  f1: 0.8176
+  mcc: 0.7732
+  brier: 0.013945          # well calibrated
+  fn_rate: 0.01792         # 889 missed attacks of 49,597
+  ndcg_at_100: 1.0
+  precision_at_1000: 1.0
+  lift_at_1000: 4.47
+  alert_reduction: 0.6861  # 68.6% of flows suppressed as NORMAL
+  note: >
+    Strong ROC/PR because NetFlow rate + service features separate these synthetic
+    attack campaigns cleanly. This is a BENCHMARK result, not a production claim:
+    re-validate on the org's own flow telemetry in shadow mode, and re-fit the
+    threshold to analyst capacity, before any automation.
+
+acceptance:                # configs/model_config.yaml `acceptance` — enforced in tests/
+  roc_auc_min: 0.95
+  pr_auc_min: 0.90
+  fn_rate_max: 0.050
+  precision_min: 0.70
+  roc_gap_max: 0.050
+  alert_reduction_min: 0.50
+  overall: PASS
+
+explainability: >
+  LightGBM native pred_contrib (exact tree SHAP) — global mean|SHAP| plus a
+  per-request top-5 driver list on /score, so an analyst sees WHY a flow was
+  flagged. No separate `shap` dependency.
+
+per_class_recall: outputs/per_class_metrics.csv    # recall for each of the 14 attack classes
+
+limitations:
+  - Public synthetic benchmark; attack campaigns are generated, not observed in the wild.
+  - Re-validate on the org's own NetFlow/IPFIX stream in shadow mode before automation.
+  - 5 features is a deliberately small, balanced set (dominance-screened); it will
+    need re-screening on org data where the informative columns differ.
+  - Human-in-the-loop required; high-confidence flows are never auto-closed.
+
+mlops:
+  retrain: weekly (mlops/retrain_schedule.yaml)
+  drift: PSI + score-shift + FN monitors (mlops/drift_config.yaml)
+  serving: near-real-time, <2s/flow; SIEM RBA risk index + SOAR routing; NORMAL -> Data Lake.
+  reproduce: py src/pipeline.py
