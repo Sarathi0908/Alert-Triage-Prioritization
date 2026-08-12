@@ -16,9 +16,35 @@ data:
   manifest: ids2018_feature_manifest.json    # native feature list + label map
   selected: native_selected.json             # leak/noise-screened model features
   screen_audit: feature_screen.csv           # full per-feature screen audit
-  # Second benchmark kept alongside for cross-dataset work (not trained on here).
-  alt_dataset: cicids2017_merged.parquet
-  alt_manifest: cicids2017_feature_manifest.json
+# Alternative dataset profiles. `py src/pipeline.py --dataset cicids2017` overlays
+# the named profile onto `data` above and writes to its own `outputs` dir, so the
+# two benchmarks never overwrite each other's artefacts.
+dataset_profiles:
+  cicids2017:
+    outputs: outputs_cicids2017
+    data:
+      # Built by data/build_cicids2017_raw.py (stage 1, verbatim) then
+      # data/build_cicids2017_flattened.py (stage 2, EDA -> model-ready X/Y).
+      dir: data
+      raw: cicids2017_raw.parquet
+      raw_manifest: cicids2017_raw_manifest.json
+      dataset: cicids2017_flattened.parquet
+      manifest: cicids2017_flattened_manifest.json
+      selected: cicids2017_native_selected.json
+      screen_audit: cicids2017_feature_screen.csv
+      provenance: cicids2017_feature_provenance.csv
+    operating_point:
+      # CICIDS2017 is far more separable than the 2018 NetFlow set, so the 0.70
+      # floor above is the wrong instrument here: measured on the held-out split it
+      # buys 639 extra true positives at the cost of 53,719 extra false positives.
+      #   floor 0.70 -> precision 0.700, recall 1.0000,     1 FN, 54,753 FP
+      #   floor 0.95 -> precision 0.951, recall 0.9999,     7 FN,  6,645 FP
+      #   floor 0.99 -> precision 0.992, recall 0.9950,   640 FN,  1,034 FP
+      # 0.95 keeps the near-zero miss rate while cutting the analyst queue ~8x.
+      min_precision: 0.95
+    eda:
+      # CIC's own column naming; the 2018 NetFlow set calls this L4_DST_PORT.
+      port_column: Destination Port
 
 # Target: y_is_attack (BENIGN=0, any attack=1). The model's attack probability IS
 # the triage score; attack_class is carried for per-scenario evaluation only and

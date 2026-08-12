@@ -1,0 +1,79 @@
+raw_column,raw_position,in_flattened,decision,reason,duplicate_of,null_count,inf_count,unique_finite,zero_frac,min,max,mean
+Destination Port,0,YES,KEEP,carried through unchanged,,0,0,53805,0.000599,0.0,65535.0,8071.4825
+Flow Duration,1,YES,KEEP,carried through unchanged,,0,0,1050899,0.001013,-13.0,119999998.0,14785663.9295
+Total Fwd Packets,2,YES,KEEP,carried through unchanged,,0,0,1432,0.0,1.0,219759.0,9.3612
+Total Backward Packets,3,YES,KEEP,carried through unchanged,,0,0,1747,0.160212,0.0,291922.0,10.3938
+Total Length of Fwd Packets,4,YES,KEEP,carried through unchanged,,0,0,17928,0.158676,0.0,12900000.0,549.3024
+Total Length of Bwd Packets,5,YES,KEEP,carried through unchanged,,0,0,64698,0.250021,0.0,655453030.0,16162.6425
+Fwd Packet Length Max,6,YES,KEEP,carried through unchanged,,0,0,5279,0.158676,0.0,24820.0,207.5999
+Fwd Packet Length Min,7,YES,KEEP,carried through unchanged,,0,0,384,0.465329,0.0,2325.0,18.7137
+Fwd Packet Length Mean,8,YES,KEEP,carried through unchanged,,0,0,99716,0.158676,0.0,5940.8571,58.2019
+Fwd Packet Length Std,9,YES,KEEP,carried through unchanged,,0,0,253909,0.65378,0.0,7125.5968,68.9101
+Bwd Packet Length Max,10,YES,KEEP,carried through unchanged,,0,0,4838,0.250021,0.0,19530.0,870.8495
+Bwd Packet Length Min,11,YES,KEEP,carried through unchanged,,0,0,583,0.507947,0.0,2896.0,41.0496
+Bwd Packet Length Mean,12,YES,KEEP,carried through unchanged,,0,0,147614,0.250021,0.0,5800.5,305.9493
+Bwd Packet Length Std,13,YES,KEEP,carried through unchanged,,0,0,248869,0.715895,0.0,8194.6605,335.3257
+Flow Bytes/s,14,YES,KEEP (repair inf),"1,509 inf values to repair",,1358,1509,1593907,0.125807,-261000000.0,2071000000.0,1491719.0643
+Flow Packets/s,15,YES,KEEP (repair inf),"2,867 inf values to repair",,0,2867,1240163,0.0,-2000000.0,4000000.0,70854.2331
+Flow IAT Mean,16,YES,KEEP,carried through unchanged,,0,0,1166311,0.001013,-13.0,120000000.0,1298448.7087
+Flow IAT Std,17,YES,KEEP,carried through unchanged,,0,0,1056642,0.352673,0.0,84800261.5664,2919270.9188
+Flow IAT Max,18,YES,KEEP,carried through unchanged,,0,0,580289,0.001012,-13.0,120000000.0,9182475.3171
+Flow IAT Min,19,YES,KEEP,carried through unchanged,,0,0,136316,0.026731,-14.0,120000000.0,162379.5618
+Fwd IAT Total,20,YES,KEEP,carried through unchanged,,0,0,493098,0.251493,0.0,120000000.0,14482961.7342
+Fwd IAT Mean,21,YES,KEEP,carried through unchanged,,0,0,737737,0.251493,0.0,120000000.0,2610192.9735
+Fwd IAT Std,22,YES,KEEP,carried through unchanged,,0,0,700313,0.627467,0.0,84602929.277,3266957.2221
+Fwd IAT Max,23,YES,KEEP,carried through unchanged,,0,0,437316,0.251493,0.0,120000000.0,9042938.5588
+Fwd IAT Min,24,YES,KEEP,carried through unchanged,,0,0,110631,0.262778,-12.0,120000000.0,1021892.9051
+Bwd IAT Total,25,YES,KEEP,carried through unchanged,,0,0,414928,0.441403,0.0,120000000.0,9893830.3501
+Bwd IAT Mean,26,YES,KEEP,carried through unchanged,,0,0,670824,0.441403,0.0,120000000.0,1805783.7674
+Bwd IAT Std,27,YES,KEEP,carried through unchanged,,0,0,709042,0.713321,0.0,84418013.7826,1485973.3473
+Bwd IAT Max,28,YES,KEEP,carried through unchanged,,0,0,368285,0.441403,0.0,120000000.0,4684692.428
+Bwd IAT Min,29,YES,KEEP,carried through unchanged,,0,0,66074,0.445047,0.0,120000000.0,967261.3708
+Fwd PSH Flags,30,YES,KEEP,carried through unchanged,,0,0,2,0.953554,0.0,1.0,0.0464
+Bwd PSH Flags,31,,DROP all-zero,every value is 0,,0,0,1,1.0,0.0,0.0,0.0
+Fwd URG Flags,32,YES,KEEP,carried through unchanged,,0,0,2,0.999889,0.0,1.0,0.0001
+Bwd URG Flags,33,,DROP duplicate column,byte-identical to `Bwd PSH Flags`,Bwd PSH Flags,0,0,1,1.0,0.0,0.0,0.0
+Fwd Header Length,34,YES,KEEP,carried through unchanged,,0,0,3771,0.000621,-32212234632.0,4644908.0,-25997.392
+Bwd Header Length,35,YES,KEEP,carried through unchanged,,0,0,3945,0.160259,-1073741320.0,5838440.0,-2273.2753
+Fwd Packets/s,36,YES,KEEP,carried through unchanged,,0,0,1220423,0.001053,0.0,3000000.0,63865.3464
+Bwd Packets/s,37,YES,KEEP,carried through unchanged,,0,0,1107886,0.160601,0.0,2000000.0,6995.1917
+Min Packet Length,38,YES,KEEP,carried through unchanged,,0,0,215,0.47479,0.0,1448.0,16.4345
+Max Packet Length,39,YES,KEEP,carried through unchanged,,0,0,5708,0.126159,0.0,24820.0,950.4024
+Packet Length Mean,40,YES,KEEP,carried through unchanged,,0,0,215826,0.126159,0.0,3337.1429,171.9444
+Packet Length Std,41,YES,KEEP,carried through unchanged,,0,0,412246,0.2519,0.0,4731.5224,294.9756
+Packet Length Variance,42,YES,KEEP,carried through unchanged,,0,0,405565,0.2519,0.0,22400000.0,486154.7941
+FIN Flag Count,43,YES,KEEP,carried through unchanged,,0,0,2,0.96462,0.0,1.0,0.0354
+SYN Flag Count,44,,DROP duplicate column,byte-identical to `Fwd PSH Flags`,Fwd PSH Flags,0,0,2,0.953554,0.0,1.0,0.0464
+RST Flag Count,45,YES,KEEP,carried through unchanged,,0,0,2,0.999758,0.0,1.0,0.0002
+PSH Flag Count,46,YES,KEEP,carried through unchanged,,0,0,2,0.701929,0.0,1.0,0.2981
+ACK Flag Count,47,YES,KEEP,carried through unchanged,,0,0,2,0.684156,0.0,1.0,0.3158
+URG Flag Count,48,YES,KEEP,carried through unchanged,,0,0,2,0.905177,0.0,1.0,0.0948
+CWE Flag Count,49,,DROP duplicate column,byte-identical to `Fwd URG Flags`,Fwd URG Flags,0,0,2,0.999889,0.0,1.0,0.0001
+ECE Flag Count,50,YES,KEEP,carried through unchanged,,0,0,2,0.999757,0.0,1.0,0.0002
+Down/Up Ratio,51,YES,KEEP,carried through unchanged,,0,0,31,0.370285,0.0,156.0,0.6835
+Average Packet Size,52,YES,KEEP,carried through unchanged,,0,0,212207,0.126159,0.0,3893.3333,191.9837
+Avg Fwd Segment Size,53,YES,KEEP,carried through unchanged,,0,0,99716,0.158676,0.0,5940.8571,58.2019
+Avg Bwd Segment Size,54,YES,KEEP,carried through unchanged,,0,0,147611,0.250021,0.0,5800.5,305.9493
+Fwd Header Length.1,55,,DROP duplicate column,byte-identical to `Fwd Header Length`,Fwd Header Length,0,0,3771,0.000621,-32212234632.0,4644908.0,-25997.392
+Fwd Avg Bytes/Bulk,56,,DROP duplicate column,byte-identical to `Bwd PSH Flags`,Bwd PSH Flags,0,0,1,1.0,0.0,0.0,0.0
+Fwd Avg Packets/Bulk,57,,DROP duplicate column,byte-identical to `Bwd PSH Flags`,Bwd PSH Flags,0,0,1,1.0,0.0,0.0,0.0
+Fwd Avg Bulk Rate,58,,DROP duplicate column,byte-identical to `Bwd PSH Flags`,Bwd PSH Flags,0,0,1,1.0,0.0,0.0,0.0
+Bwd Avg Bytes/Bulk,59,,DROP duplicate column,byte-identical to `Bwd PSH Flags`,Bwd PSH Flags,0,0,1,1.0,0.0,0.0,0.0
+Bwd Avg Packets/Bulk,60,,DROP duplicate column,byte-identical to `Bwd PSH Flags`,Bwd PSH Flags,0,0,1,1.0,0.0,0.0,0.0
+Bwd Avg Bulk Rate,61,,DROP duplicate column,byte-identical to `Bwd PSH Flags`,Bwd PSH Flags,0,0,1,1.0,0.0,0.0,0.0
+Subflow Fwd Packets,62,,DROP duplicate column,byte-identical to `Total Fwd Packets`,Total Fwd Packets,0,0,1432,0.0,1.0,219759.0,9.3612
+Subflow Fwd Bytes,63,YES,KEEP,carried through unchanged,,0,0,17928,0.158676,0.0,12870338.0,549.2919
+Subflow Bwd Packets,64,,DROP duplicate column,byte-identical to `Total Backward Packets`,Total Backward Packets,0,0,1747,0.160212,0.0,291922.0,10.3938
+Subflow Bwd Bytes,65,YES,KEEP,carried through unchanged,,0,0,64738,0.250021,0.0,655453030.0,16162.3025
+Init_Win_bytes_forward,66,YES,KEEP,carried through unchanged,,0,0,12151,0.035246,-1.0,65535.0,6989.8374
+Init_Win_bytes_backward,67,YES,KEEP,carried through unchanged,,0,0,13112,0.09605,-1.0,65535.0,1989.433
+act_data_pkt_fwd,68,YES,KEEP,carried through unchanged,,0,0,1093,0.340167,0.0,213557.0,5.4182
+min_seg_size_forward,69,YES,KEEP,carried through unchanged,,0,0,28,0.000645,-536870661.0,138.0,-2741.6879
+Active Mean,70,YES,KEEP,carried through unchanged,,0,0,326325,0.802586,0.0,110000000.0,81551.321
+Active Std,71,YES,KEEP,carried through unchanged,,0,0,202826,0.927392,0.0,74200000.0,41134.1168
+Active Max,72,YES,KEEP,carried through unchanged,,0,0,299565,0.802586,0.0,110000000.0,153182.5213
+Active Min,73,YES,KEEP,carried through unchanged,,0,0,175670,0.802586,0.0,110000000.0,58295.8177
+Idle Mean,74,YES,KEEP,carried through unchanged,,0,0,222016,0.799599,0.0,120000000.0,8316036.6272
+Idle Std,75,YES,KEEP,carried through unchanged,,0,0,197616,0.919017,0.0,76900000.0,503843.9498
+Idle Max,76,YES,KEEP,carried through unchanged,,0,0,149737,0.799599,0.0,120000000.0,8695751.9846
+Idle Min,77,YES,KEEP,carried through unchanged,,0,0,223888,0.799599,0.0,120000000.0,7920031.0146

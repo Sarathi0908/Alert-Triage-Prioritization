@@ -1,0 +1,66 @@
+feature,family,unique,zero_frac,single_feature_auc,near_constant,leak_suspect,gain_pct,role
+Bwd Packet Length Min,packet-size,532,0.5129,0.7098,False,False,22.704,SELECTED
+Init_Win_bytes_backward,window,10736,0.0809,0.6285,False,False,15.918,SELECTED
+Bwd Packet Length Std,packet-size,152439,0.6783,0.74,False,False,13.866,SELECTED
+Average Packet Size,packet-size,134338,0.1108,0.6391,False,False,10.842,SELECTED
+Destination Port,service,47789,0.0006,0.525,False,False,8.98,SELECTED
+Total Fwd Packets,volume,1116,0.0,0.6174,False,False,6.376,SELECTED
+Bwd Header Length,volume,3143,0.1234,0.5617,False,False,3.497,SELECTED
+Init_Win_bytes_forward,window,10189,0.0323,0.6537,False,False,2.655,SELECTED
+PSH Flag Count,tcp-flags,2,0.6996,0.5867,False,False,2.527,SELECTED
+Fwd Packet Length Max,packet-size,4801,0.1337,0.5652,False,False,1.708,SELECTED
+Max Packet Length,packet-size,5365,0.1108,0.6572,False,False,1.619,SELECTED
+Fwd IAT Min,timing,77605,0.261,0.5316,False,False,1.027,low-gain tail
+min_seg_size_forward,header,25,0.0007,0.5058,False,False,0.808,low-gain tail
+Flow IAT Min,timing,98651,0.0292,0.5752,False,False,0.782,low-gain tail
+Total Length of Bwd Packets,volume,47422,0.2209,0.6396,False,False,0.666,redundant NOISE
+Fwd IAT Max,timing,288648,0.2483,0.7009,False,False,0.625,low-gain tail
+Fwd Packet Length Std,packet-size,157966,0.6111,0.6173,False,False,0.569,redundant NOISE
+Bwd IAT Min,timing,43579,0.4103,0.5586,False,False,0.4,low-gain tail
+Fwd IAT Mean,timing,454912,0.2483,0.6953,False,False,0.365,low-gain tail
+Fwd Header Length,volume,2935,0.0007,0.6443,False,False,0.322,low-gain tail
+Total Backward Packets,volume,1401,0.1233,0.5657,False,False,0.316,redundant NOISE
+Flow IAT Std,timing,619282,0.3091,0.7077,False,False,0.304,low-gain tail
+Active Std,timing,121408,0.9179,0.5461,False,False,0.248,low-gain tail
+Bwd IAT Std,timing,423573,0.6753,0.6568,False,False,0.227,low-gain tail
+Total Length of Fwd Packets,volume,14523,0.1337,0.5625,False,False,0.221,low-gain tail
+Bwd Packet Length Max,packet-size,4602,0.2209,0.6643,False,False,0.219,redundant NOISE
+Bwd Packet Length Mean,packet-size,93937,0.2209,0.6615,False,False,0.216,redundant NOISE
+Flow Duration,timing,660464,0.0006,0.6613,False,False,0.214,low-gain tail
+Flow IAT Mean,timing,723619,0.0006,0.6846,False,False,0.206,low-gain tail
+act_data_pkt_fwd,volume,878,0.3179,0.5585,False,False,0.186,low-gain tail
+Packet Length Std,packet-size,259021,0.2209,0.6697,False,False,0.165,redundant NOISE
+URG Flag Count,tcp-flags,2,0.8979,0.5585,False,False,0.151,low-gain tail
+Min Packet Length,packet-size,208,0.4884,0.7289,False,False,0.142,low-gain tail
+Flow Bytes/s,rate,950876,0.1113,0.5654,False,False,0.102,low-gain tail
+Bwd IAT Mean,timing,415599,0.4062,0.5836,False,False,0.093,low-gain tail
+ACK Flag Count,tcp-flags,2,0.6866,0.5634,False,False,0.09,low-gain tail
+Fwd Packets/s,rate,729809,0.0007,0.6815,False,False,0.088,low-gain tail
+Idle Max,timing,94028,0.7731,0.6868,False,False,0.062,redundant NOISE
+Flow Packets/s,rate,739638,0.0006,0.6811,False,False,0.056,redundant NOISE
+Bwd Packets/s,rate,660576,0.1237,0.6188,False,False,0.056,low-gain tail
+Fwd IAT Total,timing,317326,0.2483,0.6757,False,False,0.048,redundant NOISE
+Fwd Packet Length Mean,packet-size,62645,0.1337,0.5883,False,False,0.046,low-gain tail
+Down/Up Ratio,ratio,23,0.3607,0.5304,False,False,0.033,low-gain tail
+Fwd IAT Std,timing,418224,0.5809,0.7448,False,False,0.032,low-gain tail
+Packet Length Mean,packet-size,136448,0.1108,0.6407,False,False,0.028,redundant NOISE
+FIN Flag Count,tcp-flags,2,0.9675,0.5637,False,False,0.026,low-gain tail
+Bwd IAT Total,timing,273354,0.4062,0.5749,False,False,0.024,low-gain tail
+Flow IAT Max,timing,394957,0.0006,0.6886,False,False,0.024,redundant NOISE
+Idle Min,timing,140692,0.7731,0.6842,False,False,0.022,low-gain tail
+Idle Mean,timing,124546,0.7731,0.6861,False,False,0.021,redundant NOISE
+Active Min,timing,120696,0.7765,0.6177,False,False,0.021,low-gain tail
+Bwd IAT Max,timing,250064,0.4062,0.586,False,False,0.017,low-gain tail
+Fwd Packet Length Min,packet-size,329,0.4781,0.7271,False,False,0.016,low-gain tail
+Fwd PSH Flags,tcp-flags,2,0.951,0.5237,False,False,0.016,low-gain tail
+Active Max,timing,194084,0.7765,0.6171,False,False,0.004,low-gain tail
+Idle Std,timing,118496,0.9086,0.5246,False,False,0.001,low-gain tail
+Active Mean,timing,205274,0.7765,0.6175,False,False,0.001,low-gain tail
+Fwd URG Flags,tcp-flags,2,1.0,0.5,True,False,0.0,near-constant NOISE
+ECE Flag Count,tcp-flags,2,0.9997,0.5002,True,False,0.0,near-constant NOISE
+Packet Length Variance,packet-size,258293,0.2209,0.6697,False,False,0.0,low-gain tail
+RST Flag Count,tcp-flags,2,0.9997,0.5002,True,False,0.0,near-constant NOISE
+Avg Fwd Segment Size,other,62645,0.1337,0.5883,False,False,0.0,redundant NOISE
+Avg Bwd Segment Size,other,93937,0.2209,0.6615,False,False,0.0,low-gain tail
+Subflow Fwd Bytes,volume,14523,0.1337,0.5625,False,False,0.0,redundant NOISE
+Subflow Bwd Bytes,volume,47438,0.2209,0.6396,False,False,0.0,redundant NOISE

@@ -6,10 +6,14 @@
 # in deliberately so the slot is runnable and inspectable offline. They are still
 # ignored, because they are regenerable outputs, not source.
 outputs/
+# One outputs dir per dataset profile (configs/model_config.yaml dataset_profiles),
+# so the two benchmarks never overwrite each other's model or metrics.
+outputs_cicids2017/
 
 # Datasets — never committed. Rebuild with:
-#   py data/build_ids2018_dataset.py     (CSE-CIC-IDS2018, the model's table)
-#   py data/build_cicids2017_dataset.py      (CICIDS2017, the second benchmark)
+#   py data/build_ids2018_dataset.py         (CSE-CIC-IDS2018, the default table)
+#   py data/build_cicids2017_raw.py          (CICIDS2017 stage 1: raw, verbatim)
+#   py data/build_cicids2017_flattened.py    (CICIDS2017 stage 2: EDA -> X/Y)
 data/*.parquet
 data/*.csv
 data/*.xlsx
@@ -19,11 +23,18 @@ data/processed/*
 !data/processed/.gitkeep
 data/raw/
 
-# Committed by design (small, and they ARE the feature contract / audit):
+# Committed by design (small, and they ARE the feature contract / audit trail):
 !data/native_selected.json
 !data/ids2018_feature_manifest.json
 !data/cicids2017_feature_manifest.json
+!data/cicids2017_raw_manifest.json
+!data/cicids2017_flattened_manifest.json
+!data/cicids2017_native_selected.json
 !data/feature_screen.csv
+!data/cicids2017_feature_screen.csv
+# Every RAW column -> kept/dropped + why. This is the reviewable record of what the
+# flattening did, so it travels with the code rather than with the data.
+!data/cicids2017_feature_provenance.csv
 
 # Internal planning document — stays on disk for local reference, never published.
 # It carries roadmap prioritisation and staffing detail that does not belong in a

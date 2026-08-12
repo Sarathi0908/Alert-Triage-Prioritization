@@ -9,7 +9,10 @@ run_training():
   index.
 
 All settings come from configs/*.yaml; no magic numbers here.
-Run:  py src/pipeline.py            (add --skip-screen to reuse data/native_selected.json)
+
+Run:  py src/pipeline.py                        # the default dataset (CSE-CIC-IDS2018)
+      py src/pipeline.py --dataset cicids2017   # a profile from model_config.dataset_profiles
+      py src/pipeline.py --skip-screen          # reuse the screened feature set
 """
 from __future__ import annotations
 
@@ -76,9 +79,44 @@ def run_screen(mcfg: dict, fcfg: dict) -> list[str]:
     return selected
 
 
-def run_training(out_dir: str | None = None, skip_screen: bool = False) -> dict:
+def apply_dataset_profile(mcfg: dict, fcfg: dict, name: str | None,
+                          log=print) -> str | None:
+    """Overlay a named profile from model_config.dataset_profiles.
+
+    Each section of the profile patches the matching config section, because a second
+    dataset needs more than different filenames: CICIDS2017 is far more separable than
+    the 2018 NetFlow set, so it carries its own precision floor, and CIC names the
+    service column differently, so the EDA needs telling.
+
+    Returns the profile's output directory. Keeping each dataset's artefacts in their
+    own directory is what stops one run silently overwriting the other's model.
+    """
+    if not name:
+        return None
+    profiles = mcfg.get("dataset_profiles") or {}
+    if name not in profiles:
+        raise SystemExit(f"unknown dataset profile {name!r}. "
+                         f"Available: {sorted(profiles) or 'none'}")
+    profile = dict(profiles[name])
+    out_dir = profile.pop("outputs", None)
+    for section, patch in profile.items():
+        target = fcfg if section == "eda" else mcfg
+        if isinstance(patch, dict) and isinstance(target.get(section), dict):
+            target[section].update(patch)
+        else:
+            target[section] = patch
+    log(f"dataset profile '{name}': {mcfg['data']['dataset']} "
+        f"· precision floor {mcfg['operating_point']['min_precision']} "
+        f"-> outputs {out_dir}")
+    return out_dir
+
+
+def run_training(out_dir: str | None = None, skip_screen: bool = False,
+                 dataset: str | None = None) -> dict:
     cfg = load_all_configs()
     mcfg, fcfg, scfg = cfg["model"], cfg["feature"], cfg["serving"]
+    profile_out = apply_dataset_profile(mcfg, fcfg, dataset, log=_log)
+    out_dir = out_dir or profile_out
     seed = mcfg["seed"]
     op, pri_cfg = mcfg["operating_point"], mcfg["priority"]
     target, cls_col = mcfg["target"], mcfg["attack_class_column"]
@@ -320,5 +358,15 @@ def _render_scorecard(m: dict) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _cli(argv: list[str]) -> dict:
+    ds = None
+    if "--dataset" in argv:
+        i = argv.index("--dataset")
+        if i + 1 >= len(argv):
+            raise SystemExit("--dataset needs a profile name (e.g. --dataset cicids2017)")
+        ds = argv[i + 1]
+    return {"skip_screen": "--skip-screen" in argv, "dataset": ds}
+
+
 if __name__ == "__main__":
-    run_training(skip_screen="--skip-screen" in sys.argv)
+    run_training(**_cli(sys.argv[1:]))
