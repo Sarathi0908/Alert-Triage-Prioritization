@@ -1,0 +1,201 @@
+# =============================================================================
+# Pipeline contract for  soc/01_p0_alert_triage  (Alert-Triage-Prioritization)
+#
+# WHERE THIS FILE BELONGS
+# Copy it to the model repo, at the root of the model folder:
+#   Alert-Triage-Prioritization/soc/01_p0_alert_triage/bhairava-pipeline.yaml
+# It must ship WITH the commit, so the declaration can never disagree with the
+# code it describes. A copy is kept here only so the contract is reviewable
+# alongside the platform that consumes it.
+#
+# WHY THIS FILE EXISTS AT ALL
+# The platform's current discovery looks for `soc/<x>/src/train/train.py`
+# (catalog/model_project_store.py:1189). This model has `src/pipeline.py`, so
+# discovery finds ZERO projects and says nothing about why. Declaring the
+# entry points removes the guessing.
+# =============================================================================
+apiVersion: bhairava.ml/v1
+kind: ModelPipeline
+
+metadata:
+  model_key: alert_triage_netflow
+  name: Alert Triage & Prioritization (CSE-CIC-IDS2018 NetFlow)
+  owner_email: soc-ml@finstein.ai
+  workstream_key: pre_agent_triage
+
+runtime:
+  # Pin by DIGEST before this runs in anger. A tag is mutable; "same commit,
+  # same model" cannot hold behind a tag.
+  image: ml-platform/model-runtime:py312@sha256:REPLACE_ME
+  requirements: requirements.txt
+  python: "3.12"
+
+# -----------------------------------------------------------------------------
+# inputs — the platform resolves the dataset version and puts the BYTES on disk,
+# already sha256-verified, before either step starts. The model never resolves
+# an id, never downloads, never holds a database credential.
+#
+# The autoloader publishes this key from soc_raw.v_netflow_training.
+# -----------------------------------------------------------------------------
+inputs:
+  training_data:
+    dataset_key: dataset.finstein.netflow_alerts
+    version: pinned_at_dispatch
+    format: parquet
+    # Fail closed if the source drifts. These are the model's real contract:
+    # 39 native features + the target + the class column, from
+    # data/ids2018_feature_manifest.json.
+    required_columns:
+      - y_is_attack
+      - attack_class
+      - L4_DST_PORT
+      - PROTOCOL
+      - IN_BYTES
+      - IN_PKTS
+      - OUT_BYTES
+      - OUT_PKTS
+      - FLOW_DURATION_MILLISECONDS
+
+params:
+  seed:
+    type: int
+    default: 42
+    immutable_for_reproducibility: true
+  min_precision:
+    type: float
+    default: 0.70
+    min: 0.0
+    max: 1.0
+  screen_sample_rows:
+    type: int
+    default: 200000
+    min: 10000
+
+# -----------------------------------------------------------------------------
+# steps — EDA first, then train. Order comes from `needs`, not from list
+# position, and `train` provably cannot run unless `eda` exited 0 and produced
+# every output declared `required: true`.
+#
+# This split mirrors what the model already does internally: run_screen() writes
+# native_selected.json, and run_training(skip_screen=True) reuses it
+# (src/pipeline.py:63, :323). The wrappers under pipeline/steps/ expose those
+# two halves as separate entry points without changing the model's own logic.
+# -----------------------------------------------------------------------------
+steps:
+
+  - id: eda
+    entrypoint: ["python", "pipeline/steps/run_eda.py"]
+    needs: []
+    inputs:
+      data: input://training_data
+    outputs:
+      selected_features:
+        path: native_selected.json
+        type: schema
+        required: true
+      screen_audit:
+        path: feature_screen.csv
+        type: profile
+        required: true
+      eda_summary:
+        path: eda/eda_summary.json
+        type: profile
+        required: true
+      column_profile:
+        path: eda/column_profile.csv
+        type: profile
+        required: true
+      # The drift baseline. This is the artifact the platform is currently
+      # missing entirely: monitoring computes PSI against a ROLLING window
+      # (monitoring/monitor/daily.py:722-723), so it measures "this week vs
+      # last week" and can never see a model drifting away from the
+      # distribution it was actually trained on. Persisting a training-time
+      # baseline is what makes the drift retraining trigger mean something.
+      drift_baseline:
+        path: eda/drift_baseline.json
+        type: drift_baseline
+        required: true
+    params: [seed, screen_sample_rows]
+    resources: {cpu: "4", memory: 16Gi}
+    timeout: 45m
+    retries: {max: 1, backoff: 30s}
+    cache: true
+
+  - id: train
+    entrypoint: ["python", "pipeline/steps/run_train.py"]
+    needs: [eda]
+    inputs:
+      data:     input://training_data
+      selected: step://eda/selected_features
+      baseline: step://eda/drift_baseline
+    outputs:
+      model:
+        path: lgbm_model.pkl
+        type: model
+        required: true
+      metrics:
+        path: metrics.json
+        type: metrics
+        required: true
+      per_class:
+        path: per_class_metrics.csv
+        type: report
+        required: true
+      scorecard:
+        path: triage_scorecard.md
+        type: model_card
+        required: true
+    params: [seed, min_precision]
+    resources: {cpu: "8", memory: 32Gi}
+    timeout: 3h
+    # Zero, deliberately. A retried fit is a DIFFERENT model registered under
+    # the same job id — the one thing that quietly destroys lineage.
+    retries: {max: 0}
+    cache: true
+
+# -----------------------------------------------------------------------------
+# retraining — declared here, enforced by the platform. Replaces the
+# CATALOG_MODEL_PROJECT_BOOTSTRAP_* environment variables.
+# -----------------------------------------------------------------------------
+retraining:
+  enabled: true
+  triggers:
+    - type: new_data
+      # Fires when arrivals since the LAST SUCCESSFUL TRAINING reach 10% of the
+      # row count at that training. Measured against the last *trained*
+      # watermark, not the last refresh — otherwise ten nights of 3% each reset
+      # the counter and the threshold is never reachable.
+      new_row_ratio: 0.10
+    - type: model_age
+      max_days: 30
+  guards:
+    min_rows_for_first_train: 50000
+    max_shrink_pct: 0.10          # a 10% row drop blocks: that is a truncate
+    cooldown: 24h
+    max_runs_per_day: 1
+    max_concurrent: 1
+
+# -----------------------------------------------------------------------------
+# gates — the model's own acceptance floors, from configs/model_config.yaml.
+# A repo may TIGHTEN the platform floors; it may never loosen them. Validated
+# at registration.
+#
+# NOTE — this model's metrics.json does not yet emit the platform's gate
+# vocabulary. It writes `recall`, `brier`, `pr_auc`; the gates read
+# `recall_malicious`, `brier_score`, `pr_auc`, plus six it does not produce at
+# all (overall_psi, p1_p2_missed, high_critical_suppressed, replay_passed,
+# holdout_malicious, replay_agent_worthy). run_train.py emits the mapped names
+# it CAN measure and OMITS the rest — omission blocks, which is the honest
+# outcome, and is why `gate_profile` below is `model_acceptance` rather than
+# the full triage gate.
+# -----------------------------------------------------------------------------
+gates:
+  gate_profile: model_acceptance
+  floors:
+    roc_auc_min: 0.95
+    pr_auc_min: 0.90
+    precision_min: 0.70
+    fn_rate_max: 0.050
+    roc_gap_max: 0.050
+    alert_reduction_min: 0.50
+    min_recall_any_class: 0.50
