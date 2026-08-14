@@ -65,15 +65,15 @@ def stage_input(mcfg: dict, input_dir: Path) -> Path:
     Nothing in the model is modified — `data.dataset` still names the file it
     always named. We simply make that filename BE the bytes the platform
     verified, so the model reads platform-governed data without knowing it.
+
+    When the platform did NOT stage an input (older executors set no
+    ML_INPUT_DIR contract), fall back to the training entrypoint's own
+    resolution: local table first, then the S3 download — the UEBA mirror.
     """
     supplied = input_dir / "training_data.parquet"
     if not supplied.exists():
-        raise SystemExit(
-            f"missing required input: {supplied}\n"
-            "The platform is contracted to place a verified Parquet here "
-            "before this step starts. If you are running by hand, set "
-            "ML_INPUT_DIR to a directory containing training_data.parquet."
-        )
+        from src.train.train import ensure_dataset
+        return ensure_dataset(mcfg)
     target = ds.dataset_path(mcfg)
     target.parent.mkdir(parents=True, exist_ok=True)
     if target.resolve() != supplied.resolve():
@@ -135,6 +135,10 @@ def main() -> int:
 
     cfg = load_all_configs()
     mcfg, fcfg = cfg["model"], cfg["feature"]
+    profile = os.environ.get("ALERT_TRIAGE_DATASET", "cicids2017").strip()
+    if profile not in ("", "default", "ids2018"):
+        P.apply_dataset_profile(mcfg, fcfg, profile,
+                                log=lambda m: print(f"[eda] {m}", flush=True))
     if "seed" in params:
         mcfg["seed"] = int(params["seed"])
     if "screen_sample_rows" in params:

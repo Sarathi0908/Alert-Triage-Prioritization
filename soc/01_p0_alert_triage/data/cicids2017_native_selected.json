@@ -10,9 +10,16 @@
     "Init_Win_bytes_forward",
     "PSH Flag Count",
     "Fwd Packet Length Max",
-    "Max Packet Length"
+    "Max Packet Length",
+    "Fwd IAT Min",
+    "Flow IAT Min",
+    "min_seg_size_forward",
+    "Fwd IAT Max",
+    "Avg Bwd Segment Size",
+    "Bwd IAT Min",
+    "Fwd IAT Mean"
   ],
-  "n": 11,
+  "n": 18,
   "families": {
     "Bwd Packet Length Min": "packet-size",
     "Init_Win_bytes_backward": "window",
@@ -24,7 +31,14 @@
     "Init_Win_bytes_forward": "window",
     "PSH Flag Count": "tcp-flags",
     "Fwd Packet Length Max": "packet-size",
-    "Max Packet Length": "packet-size"
+    "Max Packet Length": "packet-size",
+    "Fwd IAT Min": "timing",
+    "Flow IAT Min": "timing",
+    "min_seg_size_forward": "header",
+    "Fwd IAT Max": "timing",
+    "Avg Bwd Segment Size": "other",
+    "Bwd IAT Min": "timing",
+    "Fwd IAT Mean": "timing"
   },
   "gain_pct": {
     "Bwd Packet Length Min": 22.67,
@@ -37,7 +51,14 @@
     "Init_Win_bytes_forward": 2.629,
     "PSH Flag Count": 2.575,
     "Fwd Packet Length Max": 2.072,
-    "Max Packet Length": 1.74
+    "Max Packet Length": 1.74,
+    "Fwd IAT Min": 1.153,
+    "Flow IAT Min": 0.794,
+    "min_seg_size_forward": 0.768,
+    "Fwd IAT Max": 0.457,
+    "Avg Bwd Segment Size": 0.435,
+    "Bwd IAT Min": 0.414,
+    "Fwd IAT Mean": 0.402
   },
   "single_feature_auc": {
     "Bwd Packet Length Min": 0.7098,
@@ -50,7 +71,14 @@
     "Init_Win_bytes_forward": 0.6537,
     "PSH Flag Count": 0.5867,
     "Fwd Packet Length Max": 0.5652,
-    "Max Packet Length": 0.6572
+    "Max Packet Length": 0.6572,
+    "Fwd IAT Min": 0.5316,
+    "Flow IAT Min": 0.5752,
+    "min_seg_size_forward": 0.5058,
+    "Fwd IAT Max": 0.7009,
+    "Avg Bwd Segment Size": 0.6615,
+    "Bwd IAT Min": 0.5586,
+    "Fwd IAT Mean": 0.6953
   },
   "removed": {
     "near_constant_noise": [
@@ -83,10 +111,8 @@
       "Active Mean",
       "Active Min",
       "Active Std",
-      "Avg Bwd Segment Size",
       "Bwd IAT Max",
       "Bwd IAT Mean",
-      "Bwd IAT Min",
       "Bwd IAT Std",
       "Bwd IAT Total",
       "Bwd Packets/s",
@@ -95,12 +121,8 @@
       "Flow Bytes/s",
       "Flow Duration",
       "Flow IAT Mean",
-      "Flow IAT Min",
       "Flow IAT Std",
       "Fwd Header Length",
-      "Fwd IAT Max",
-      "Fwd IAT Mean",
-      "Fwd IAT Min",
       "Fwd IAT Std",
       "Fwd PSH Flags",
       "Fwd Packet Length Mean",
@@ -112,8 +134,7 @@
       "Packet Length Variance",
       "Total Length of Fwd Packets",
       "URG Flag Count",
-      "act_data_pkt_fwd",
-      "min_seg_size_forward"
+      "act_data_pkt_fwd"
     ]
   },
   "categorical": []

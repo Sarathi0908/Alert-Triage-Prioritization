@@ -10,14 +10,14 @@ Init_Win_bytes_forward,window,10189,0.0323,0.6537,False,False,2.655,SELECTED
 PSH Flag Count,tcp-flags,2,0.6996,0.5867,False,False,2.527,SELECTED
 Fwd Packet Length Max,packet-size,4801,0.1337,0.5652,False,False,1.708,SELECTED
 Max Packet Length,packet-size,5365,0.1108,0.6572,False,False,1.619,SELECTED
-Fwd IAT Min,timing,77605,0.261,0.5316,False,False,1.027,low-gain tail
-min_seg_size_forward,header,25,0.0007,0.5058,False,False,0.808,low-gain tail
-Flow IAT Min,timing,98651,0.0292,0.5752,False,False,0.782,low-gain tail
+Fwd IAT Min,timing,77605,0.261,0.5316,False,False,1.027,SELECTED
+min_seg_size_forward,header,25,0.0007,0.5058,False,False,0.808,SELECTED
+Flow IAT Min,timing,98651,0.0292,0.5752,False,False,0.782,SELECTED
 Total Length of Bwd Packets,volume,47422,0.2209,0.6396,False,False,0.666,redundant NOISE
-Fwd IAT Max,timing,288648,0.2483,0.7009,False,False,0.625,low-gain tail
+Fwd IAT Max,timing,288648,0.2483,0.7009,False,False,0.625,SELECTED
 Fwd Packet Length Std,packet-size,157966,0.6111,0.6173,False,False,0.569,redundant NOISE
-Bwd IAT Min,timing,43579,0.4103,0.5586,False,False,0.4,low-gain tail
-Fwd IAT Mean,timing,454912,0.2483,0.6953,False,False,0.365,low-gain tail
+Bwd IAT Min,timing,43579,0.4103,0.5586,False,False,0.4,SELECTED
+Fwd IAT Mean,timing,454912,0.2483,0.6953,False,False,0.365,SELECTED
 Fwd Header Length,volume,2935,0.0007,0.6443,False,False,0.322,low-gain tail
 Total Backward Packets,volume,1401,0.1233,0.5657,False,False,0.316,redundant NOISE
 Flow IAT Std,timing,619282,0.3091,0.7077,False,False,0.304,low-gain tail
@@ -61,6 +61,6 @@ ECE Flag Count,tcp-flags,2,0.9997,0.5002,True,False,0.0,near-constant NOISE
 Packet Length Variance,packet-size,258293,0.2209,0.6697,False,False,0.0,low-gain tail
 RST Flag Count,tcp-flags,2,0.9997,0.5002,True,False,0.0,near-constant NOISE
 Avg Fwd Segment Size,other,62645,0.1337,0.5883,False,False,0.0,redundant NOISE
-Avg Bwd Segment Size,other,93937,0.2209,0.6615,False,False,0.0,low-gain tail
+Avg Bwd Segment Size,other,93937,0.2209,0.6615,False,False,0.0,SELECTED
 Subflow Fwd Bytes,volume,14523,0.1337,0.5625,False,False,0.0,redundant NOISE
 Subflow Bwd Bytes,volume,47438,0.2209,0.6396,False,False,0.0,redundant NOISE

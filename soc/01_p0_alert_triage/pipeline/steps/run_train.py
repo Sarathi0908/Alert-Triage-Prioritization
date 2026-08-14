@@ -58,23 +58,40 @@ def stage_inputs(mcfg: dict, input_dir: Path) -> None:
     expects them. The model's own paths are unchanged."""
     supplied = input_dir / "training_data.parquet"
     if not supplied.exists():
-        raise SystemExit(f"missing required input: {supplied}")
-    target = ds.dataset_path(mcfg)
-    target.parent.mkdir(parents=True, exist_ok=True)
-    if target.resolve() != supplied.resolve():
-        shutil.copy2(supplied, target)
+        # No platform-staged input: resolve like the training entrypoint does
+        # (local table -> S3 download), the UEBA mirror.
+        from src.train.train import ensure_dataset
+        ensure_dataset(mcfg)
+    else:
+        target = ds.dataset_path(mcfg)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if target.resolve() != supplied.resolve():
+            shutil.copy2(supplied, target)
 
-    # The eda step's declared output, delivered by the platform.
-    selected = input_dir / "selected" / mcfg["data"]["selected"]
-    if not selected.exists():
-        selected = input_dir / mcfg["data"]["selected"]
-    if not selected.exists():
+    # The eda step's feature list. Looked up where a platform that materialises
+    # step outputs would put it, then where run_eda.py actually leaves it when
+    # both steps share one workspace: $ML_OUTPUT_DIR, and the slot's data dir
+    # (run_screen writes it there). The old code trusted materialisation the
+    # executor does not perform, so `needs: [eda]` runs died here every time.
+    name = mcfg["data"]["selected"]
+    out_dir = os.environ.get("ML_OUTPUT_DIR")
+    candidates = [
+        input_dir / "selected" / name,
+        input_dir / name,
+        *( [Path(out_dir) / name] if out_dir else [] ),
+        ds.data_dir(mcfg) / name,
+    ]
+    selected = next((p for p in candidates if p.exists()), None)
+    if selected is None:
         raise SystemExit(
-            f"missing required input from the eda step: {mcfg['data']['selected']}\n"
-            "train declares `needs: [eda]`, so the platform must have "
-            "materialised it. Running by hand? Run run_eda.py first."
+            f"missing required input from the eda step: {name}\n"
+            "train declares `needs: [eda]`, so run_eda.py must have written it "
+            "to $ML_OUTPUT_DIR or the slot data dir. Running by hand? Run "
+            "run_eda.py first."
         )
-    shutil.copy2(selected, ds.data_dir(mcfg) / mcfg["data"]["selected"])
+    target = ds.data_dir(mcfg) / name
+    if selected.resolve() != target.resolve():
+        shutil.copy2(selected, target)
 
 
 def _finite(value) -> float | None:
@@ -149,7 +166,13 @@ def main() -> int:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     cfg = load_all_configs()
-    mcfg = cfg["model"]
+    mcfg, fcfg = cfg["model"], cfg["feature"]
+    profile = os.environ.get("ALERT_TRIAGE_DATASET", "cicids2017").strip()
+    if profile in ("", "default", "ids2018"):
+        profile = None
+    else:
+        P.apply_dataset_profile(mcfg, fcfg, profile,
+                                log=lambda m: print(f"[train] {m}", flush=True))
     if "seed" in params:
         mcfg["seed"] = int(params["seed"])
     if "min_precision" in params:
@@ -160,7 +183,7 @@ def main() -> int:
 
     # The model's own training, reusing the eda step's screen. Nothing about the
     # model's logic is changed here.
-    P.run_training(out_dir=str(out_dir), skip_screen=True)
+    P.run_training(out_dir=str(out_dir), skip_screen=True, dataset=profile)
 
     raw_path = out_dir / "metrics.json"
     if not raw_path.exists():

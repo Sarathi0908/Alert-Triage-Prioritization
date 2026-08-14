@@ -18,8 +18,10 @@ apiVersion: bhairava.ml/v1
 kind: ModelPipeline
 
 metadata:
-  model_key: alert_triage_netflow
-  name: Alert Triage & Prioritization (CSE-CIC-IDS2018 NetFlow)
+  # Matches the key the platform's convention scanner derives from the folder
+  # name, so a contract-based scan and a legacy scan register the SAME project.
+  model_key: 01_p0_alert_triage
+  name: Alert Triage & Prioritization (CICIDS2017 MachineLearningCSV)
   owner_email: soc-ml@finstein.ai
   workstream_key: pre_agent_triage
 
@@ -39,22 +41,23 @@ runtime:
 # -----------------------------------------------------------------------------
 inputs:
   training_data:
-    dataset_key: dataset.finstein.netflow_alerts
+    # The dataset the platform bootstrap wired for this project.
+    dataset_key: dataset.default.01_p0_alert_triage.training_data
     version: pinned_at_dispatch
     format: parquet
     # Fail closed if the source drifts. These are the model's real contract:
-    # 39 native features + the target + the class column, from
-    # data/ids2018_feature_manifest.json.
+    # the CICIDS2017 flattened table (data/cicids2017_flattened_manifest.json) —
+    # target + class column + the native CIC feature names.
     required_columns:
       - y_is_attack
       - attack_class
-      - L4_DST_PORT
-      - PROTOCOL
-      - IN_BYTES
-      - IN_PKTS
-      - OUT_BYTES
-      - OUT_PKTS
-      - FLOW_DURATION_MILLISECONDS
+      - Destination Port
+      - Flow Duration
+      - Total Fwd Packets
+      - Total Backward Packets
+      - Bwd Packet Length Min
+      - Init_Win_bytes_backward
+      - Average Packet Size
 
 params:
   seed:

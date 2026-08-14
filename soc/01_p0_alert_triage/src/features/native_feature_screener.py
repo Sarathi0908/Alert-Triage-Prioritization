@@ -110,8 +110,13 @@ def screen(sample: pd.DataFrame, y: np.ndarray, native: list[str],
     selected = [c for c in pool if gain.get(c, 0) >= floor]
     if len(selected) < min_sel:      # keep the strongest few even if they dip below
         selected = sorted(pool, key=lambda c: -gain.get(c, 0))[:min(min_sel, len(pool))]
-    low_tail = [c for c in pool if c not in selected]
     selected = sorted(selected, key=lambda c: -gain.get(c, 0))
+    # Optional hard cap: keep only the strongest N survivors. The floor decides
+    # who is eligible; the cap decides how many make the team.
+    max_sel = bal.get("max_selected")
+    if max_sel:
+        selected = selected[:int(max_sel)]
+    low_tail = [c for c in pool if c not in selected]
 
     # ---- audit: every dropped column carries a reason --------------------------
     leak_key = f"leak_suspect (auc>={scr_cfg['leak']['single_feature_auc_min']})"

@@ -100,7 +100,8 @@ def apply_dataset_profile(mcfg: dict, fcfg: dict, name: str | None,
     profile = dict(profiles[name])
     out_dir = profile.pop("outputs", None)
     for section, patch in profile.items():
-        target = fcfg if section == "eda" else mcfg
+        # `eda` and `screen` live in feature_config; everything else in model_config.
+        target = fcfg if section in ("eda", "screen") else mcfg
         if isinstance(patch, dict) and isinstance(target.get(section), dict):
             target[section].update(patch)
         else:

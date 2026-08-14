@@ -28,6 +28,13 @@ ENVIRONMENT (all optional; sensible local defaults)
     MLFLOW_EXPERIMENT_NAME   MLflow experiment (default alert_triage).
     ALERT_TRIAGE_SKIP_SCREEN set to 1 to reuse the committed screened feature set
                              instead of re-running the leak/noise screen.
+    ALERT_TRIAGE_DATASET     dataset profile from model_config.dataset_profiles.
+                             Defaults to `cicids2017` — the platform's governed
+                             table IS the CICIDS2017 (MachineLearningCSV) build,
+                             so the platform trains that benchmark: EDA + leak/
+                             noise screen keeping the TOP 18 native features,
+                             then the supervised LightGBM classifier. Set to
+                             `default` for the CSE-CIC-IDS2018 table instead.
 """
 import json
 import os
@@ -105,19 +112,30 @@ def ensure_dataset(mcfg: dict) -> Path:
 
 def main() -> int:
     skip_screen = os.environ.get("ALERT_TRIAGE_SKIP_SCREEN", "") not in ("", "0", "false", "False")
-    out_dir = Path(os.environ.get("ML_OUTPUT_DIR") or resolve_path("outputs"))
-    out_dir.mkdir(parents=True, exist_ok=True)
+    profile = os.environ.get("ALERT_TRIAGE_DATASET", "cicids2017").strip()
+    if profile in ("", "default", "ids2018"):
+        profile = None
 
     cfg = load_all_configs()
-    mcfg = cfg["model"]
-    ensure_dataset(mcfg)
+    mcfg, fcfg = cfg["model"], cfg["feature"]
 
-    # Import here (not at module top) so the data resolution above can fail with a
-    # clear message before we pull in the full training stack.
+    # The profile decides WHICH parquet the slot trains on (and its own precision
+    # floor / screen policy), so it must be applied BEFORE the dataset is
+    # resolved — otherwise ensure_dataset would fetch the wrong table.
     import src.pipeline as P
 
-    print(f"[train] training into {out_dir} (skip_screen={skip_screen})", flush=True)
-    M = P.run_training(out_dir=str(out_dir), skip_screen=skip_screen)
+    profile_out = P.apply_dataset_profile(mcfg, fcfg, profile,
+                                          log=lambda m: print(f"[train] {m}", flush=True))
+    out_dir = Path(os.environ.get("ML_OUTPUT_DIR") or profile_out or resolve_path("outputs"))
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    ensure_dataset(mcfg)
+
+    print(f"[train] training into {out_dir} (profile={profile or 'default'}, "
+          f"skip_screen={skip_screen})", flush=True)
+    # The profile is already applied to this mcfg/fcfg; run_training re-loads its
+    # own config copies, so pass the profile through rather than the patched dicts.
+    M = P.run_training(out_dir=str(out_dir), skip_screen=skip_screen, dataset=profile)
 
     metrics_path = out_dir / "metrics.json"
     if not metrics_path.exists():

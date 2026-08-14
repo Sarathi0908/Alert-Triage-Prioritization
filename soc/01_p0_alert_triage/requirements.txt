@@ -60,9 +60,10 @@ httpx==0.28.1
 # Mirrors the UEBA slot: the entrypoint logs the run + artifacts to the model
 # registry via MLflow (best-effort — a tracking outage never fails training).
 mlflow==3.14.0
-# boto3 is only needed for the S3 fallback in ensure_dataset(); training from a
-# local parquet works without it, so it is intentionally left OPTIONAL/unpinned.
-# boto3>=1.34
+# boto3 is REQUIRED on the platform: the dataset parquet is gitignored, so the
+# training-worker clone has no local table and ensure_dataset() must be able to
+# fall back to the s3://bhairava-ml-training-data download (the UEBA mirror).
+boto3>=1.34
 
 # --- executing the notebooks (optional; generation needs only nbformat) ------
 # jupyter==1.1.1

@@ -45,6 +45,18 @@ dataset_profiles:
     eda:
       # CIC's own column naming; the 2018 NetFlow set calls this L4_DST_PORT.
       port_column: Destination Port
+    screen:
+      # Top-18 feature policy for the CICIDS2017 benchmark: the floor no longer
+      # trims the tail (0.0); instead the strongest 18 screen survivors are kept.
+      # NOTE apply_dataset_profile patches shallowly, so this balance block must
+      # carry EVERY key the screener reads, not only the ones that change.
+      balance:
+        gain_cap_pct: 45.0
+        gain_floor_pct: 0.0
+        max_dominant_drops: 2
+        min_pool_size: 8
+        min_selected: 18
+        max_selected: 18
 
 # Target: y_is_attack (BENIGN=0, any attack=1). The model's attack probability IS
 # the triage score; attack_class is carried for per-scenario evaluation only and
