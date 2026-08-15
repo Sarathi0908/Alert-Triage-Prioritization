@@ -149,7 +149,14 @@ def main() -> int:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     cfg = load_all_configs()
-    mcfg = cfg["model"]
+    mcfg, fcfg = cfg["model"], cfg["feature"]
+    # Dataset profile: platform job parameters win, env is the manual override,
+    # cicids2017 is the default (must match the eda step's selection).
+    profile = str(params.get("dataset")
+                  or os.environ.get("ALERT_TRIAGE_DATASET", "cicids2017")).strip()
+    if profile not in ("", "default", "ids2018"):
+        P.apply_dataset_profile(mcfg, fcfg, profile,
+                                log=lambda m: print(f"[train] {m}", flush=True))
     if "seed" in params:
         mcfg["seed"] = int(params["seed"])
     if "min_precision" in params:

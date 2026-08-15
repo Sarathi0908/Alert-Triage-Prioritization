@@ -135,6 +135,14 @@ def main() -> int:
 
     cfg = load_all_configs()
     mcfg, fcfg = cfg["model"], cfg["feature"]
+    # Dataset profile: platform job parameters win, env is the manual override,
+    # cicids2017 is the default. Without this the model expects the IDS2018
+    # feature set and fails on CIC-flattened data.
+    profile = str(params.get("dataset")
+                  or os.environ.get("ALERT_TRIAGE_DATASET", "cicids2017")).strip()
+    if profile not in ("", "default", "ids2018"):
+        P.apply_dataset_profile(mcfg, fcfg, profile,
+                                log=lambda m: print(f"[eda] {m}", flush=True))
     if "seed" in params:
         mcfg["seed"] = int(params["seed"])
     if "screen_sample_rows" in params:
