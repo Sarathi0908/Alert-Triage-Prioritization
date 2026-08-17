@@ -44,6 +44,7 @@ import pandas as pd                                             # noqa: E402
 from src.config import load_all_configs                         # noqa: E402
 from src import data_source as ds                               # noqa: E402
 import src.pipeline as P                                        # noqa: E402
+from src.evaluation import flow_traffic_profiler as ftp         # noqa: E402
 
 
 def _env_dir(name: str, default: str) -> Path:
@@ -165,20 +166,30 @@ def main() -> int:
           f"positive rate {baseline['label_balance']['positive_rate']:.4f})",
           flush=True)
 
-    # ---- publish everything the platform declared as an output -------------
-    data_dir = ds.data_dir(mcfg)
-    for name in (mcfg["data"]["selected"], mcfg["data"]["screen_audit"]):
-        src = data_dir / name
-        if src.exists():
-            shutil.copy2(src, out_dir / name)
+    # ---- the declared EDA artefacts (summary, profiles, charts) ------------
+    # eda_summary.json and column_profile.csv are declared required outputs of
+    # THIS step, and the profiler that produces them is the model's own
+    # (src/evaluation/flow_traffic_profiler.py) — the same call run_training()
+    # makes at pipeline.py:219. Charts inside it are best-effort; the summary
+    # is not.
+    native = ds.native_features(mcfg)
+    eda_frame = ds.load_frame(mcfg, columns=native)
+    ftp.run(eda_frame, selected, native,
+            {"dataset": mcfg["data"]["dataset"]}, mcfg, fcfg,
+            out_dir / "eda", log=lambda m: print(f"[eda] {m}", flush=True))
+    del eda_frame
 
-    # The model writes its EDA charts under outputs/eda when the training step
-    # runs the profiler; anything already there is carried forward.
-    slot_eda = SLOT / "outputs" / "eda"
-    if slot_eda.exists() and slot_eda.resolve() != (out_dir / "eda").resolve():
-        for item in slot_eda.iterdir():
-            if item.is_file():
-                shutil.copy2(item, out_dir / "eda" / item.name)
+    # ---- publish everything the platform declared as an output -------------
+    # The contract names are profile-independent: a dataset profile renames
+    # these files INTERNALLY (cicids2017_native_selected.json), but the
+    # platform verifies the DECLARED paths, so they are published under the
+    # canonical names whatever profile is active.
+    data_dir = ds.data_dir(mcfg)
+    for internal, declared in ((mcfg["data"]["selected"], "native_selected.json"),
+                               (mcfg["data"]["screen_audit"], "feature_screen.csv")):
+        src = data_dir / internal
+        if src.exists():
+            shutil.copy2(src, out_dir / declared)
 
     print(f"[eda] outputs written to {out_dir}", flush=True)
     return 0

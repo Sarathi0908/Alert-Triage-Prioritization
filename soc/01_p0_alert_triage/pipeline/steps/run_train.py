@@ -64,13 +64,19 @@ def stage_inputs(mcfg: dict, input_dir: Path) -> None:
     if target.resolve() != supplied.resolve():
         shutil.copy2(supplied, target)
 
-    # The eda step's declared output, delivered by the platform.
-    selected = input_dir / "selected" / mcfg["data"]["selected"]
-    if not selected.exists():
-        selected = input_dir / mcfg["data"]["selected"]
-    if not selected.exists():
+    # The eda step's declared output, delivered by the platform under the
+    # DECLARED contract name (native_selected.json) — profile-independent.
+    # The profile-specific names are accepted too for by-hand runs.
+    candidates = (
+        input_dir / "selected" / "native_selected.json",
+        input_dir / "selected" / mcfg["data"]["selected"],
+        input_dir / mcfg["data"]["selected"],
+        input_dir / "native_selected.json",
+    )
+    selected = next((path for path in candidates if path.exists()), None)
+    if selected is None:
         raise SystemExit(
-            f"missing required input from the eda step: {mcfg['data']['selected']}\n"
+            "missing required input from the eda step: native_selected.json\n"
             "train declares `needs: [eda]`, so the platform must have "
             "materialised it. Running by hand? Run run_eda.py first."
         )
@@ -166,8 +172,12 @@ def main() -> int:
     print(f"[train] inputs staged; training into {out_dir}", flush=True)
 
     # The model's own training, reusing the eda step's screen. Nothing about the
-    # model's logic is changed here.
-    P.run_training(out_dir=str(out_dir), skip_screen=True)
+    # model's logic is changed here. run_training() reloads the configs
+    # internally, so the profile must travel WITH the call — the overlay applied
+    # to this wrapper's own copies does not reach it.
+    P.run_training(out_dir=str(out_dir), skip_screen=True,
+                   dataset=profile if profile not in ("", "default", "ids2018")
+                   else None)
 
     raw_path = out_dir / "metrics.json"
     if not raw_path.exists():
