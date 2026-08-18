@@ -3,7 +3,7 @@
 #
 # WHERE THIS FILE BELONGS
 # Copy it to the model repo, at the root of the model folder:
-#   Alert-Triage-Prioritization/soc/01_p0_alert_triage/bhairava-pipeline.yaml
+#   Alert-Triage-Prioritization/soc/01_p0_alert_triage/pipeline.yaml
 # It must ship WITH the commit, so the declaration can never disagree with the
 # code it describes. A copy is kept here only so the contract is reviewable
 # alongside the platform that consumes it.
@@ -14,7 +14,7 @@
 # discovery finds ZERO projects and says nothing about why. Declaring the
 # entry points removes the guessing.
 # =============================================================================
-apiVersion: bhairava.ml/v1
+apiVersion: mlplatform/v1
 kind: ModelPipeline
 
 metadata:
