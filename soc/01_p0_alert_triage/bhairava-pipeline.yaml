@@ -89,6 +89,22 @@ data_preparation:
   env:
     ML_SOURCE_DSN: ML_TRANSFORM_DSN
     ML_TARGET_DSN: ML_TRANSFORM_DSN
+  # STRUCTURE ONLY — table NAMES, validated as plain SQL identifiers. The
+  # platform pre-fills the source wizard from this block and verifies every
+  # listed table exists before any run; the flatten config above is what
+  # actually reads (and, for multi-table models, joins) them. `connection`
+  # NAMES the server-side env var holding the DSN — the credential_ref
+  # contract; a literal DSN here would put a secret in git and is refused.
+  # Single-table today; `tables` accepts 1..N. `watermark_table` defaults to
+  # the first table — the ONE relation the 10% new-data trigger measures.
+  source:
+    connection: SOURCE_DB_DSN
+    schema: soc_raw
+    tables: [cicids2017_flows]
+    watermark_column: event_id
+  flattened:
+    schema: ml_processed
+    table: alert_triage_features
   training_parameters:
     dataset: cicids2017
 
