@@ -148,6 +148,33 @@ def to_gate_metrics(raw: dict) -> dict:
     return out
 
 
+def declare_serving_transforms(out_dir: Path) -> None:
+    """Translate this model's own bundle flags into the platform's serving
+    convention.
+
+    The bundle records ``log1p_volume``/``vol_feature`` as MODEL-side facts;
+    the platform's serving plane applies only an explicit ``transforms`` list
+    (it never infers repo-specific keys), so the translation lives HERE, where
+    the semantics are owned. Without it a served score would skip the log1p
+    the training applied — silent train/serve skew with no error message.
+    """
+    bundle_path = out_dir / "lgbm_model.pkl"
+    if not bundle_path.exists():
+        return
+    import joblib
+
+    bundle = joblib.load(bundle_path)
+    if not isinstance(bundle, dict) or "transforms" in bundle:
+        return
+    transforms = []
+    if bundle.get("log1p_volume") and bundle.get("vol_feature"):
+        transforms.append({"op": "log1p", "column": str(bundle["vol_feature"])})
+    if transforms:
+        bundle["transforms"] = transforms
+        joblib.dump(bundle, bundle_path)
+        print(f"[train] serving transforms declared: {transforms}", flush=True)
+
+
 def main() -> int:
     params = _params()
     input_dir = Path(os.environ.get("ML_INPUT_DIR") or (SLOT / "data"))
@@ -178,6 +205,7 @@ def main() -> int:
     P.run_training(out_dir=str(out_dir), skip_screen=True,
                    dataset=profile if profile not in ("", "default", "ids2018")
                    else None)
+    declare_serving_transforms(out_dir)
 
     raw_path = out_dir / "metrics.json"
     if not raw_path.exists():
