@@ -72,6 +72,27 @@ params:
     min: 10000
 
 # -----------------------------------------------------------------------------
+# data_preparation — how the platform readies THIS model's data before
+# extraction: the flatten that turns the client's raw table into the model's
+# feature table. Declared here (the rename map the config names is CIC-specific
+# knowledge that belongs with the model), so the auto-created refresh policy
+# arrives pre-filled — no operator re-types platform plumbing in a UI.
+# `env` maps subprocess env vars to server env var NAMES — never values.
+# -----------------------------------------------------------------------------
+data_preparation:
+  command:
+    - python
+    - pipelines/steps/run_eda_sql.py
+    - --config
+    - pipelines/examples/postgres-pipeline.yaml
+  timeout_s: 2700
+  env:
+    ML_SOURCE_DSN: ML_TRANSFORM_DSN
+    ML_TARGET_DSN: ML_TRANSFORM_DSN
+  training_parameters:
+    dataset: cicids2017
+
+# -----------------------------------------------------------------------------
 # steps — EDA first, then train. Order comes from `needs`, not from list
 # position, and `train` provably cannot run unless `eda` exited 0 and produced
 # every output declared `required: true`.
