@@ -361,8 +361,18 @@ def main() -> int:
                    else None)
     declare_serving_transforms(out_dir)
     declare_routing(out_dir)
-    head_extras = attach_class_head(out_dir, input_dir)
-    head_extras.update(measure_priority_grids(out_dir))
+    # The heads are BONUSES on top of a training that already succeeded — a
+    # head failure (library incompatibility, unfittable data, anything) must
+    # never fail the run. Same drop-and-log honesty the serving plane applies.
+    head_extras: dict = {}
+    try:
+        head_extras = attach_class_head(out_dir, input_dir)
+    except Exception as exc:  # noqa: BLE001
+        print(f"[train] class head skipped ({type(exc).__name__}): {exc}", flush=True)
+    try:
+        head_extras.update(measure_priority_grids(out_dir))
+    except Exception as exc:  # noqa: BLE001
+        print(f"[train] priority-grid measurement skipped ({type(exc).__name__}): {exc}", flush=True)
 
     raw_path = out_dir / "metrics.json"
     if not raw_path.exists():
