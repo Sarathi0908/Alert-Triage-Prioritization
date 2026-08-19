@@ -175,6 +175,160 @@ def declare_serving_transforms(out_dir: Path) -> None:
         print(f"[train] serving transforms declared: {transforms}", flush=True)
 
 
+def declare_routing(out_dir: Path) -> None:
+    """Declare this model's decile→action routing INTO the bundle.
+
+    The map lives in configs/serving_config.yaml, which the platform cannot
+    (and must not) read — same pattern as declare_serving_transforms(): the
+    repo translates its own config into the platform's bundle convention, a
+    ``routing`` block {decile_actions, default_action, escalate_above,
+    alert_destination, noise_destination}. No block → the platform serves no
+    routing keys; it never invents a routing decision the model owner did not
+    declare.
+    """
+    bundle_path = out_dir / "lgbm_model.pkl"
+    config_path = SLOT / "configs" / "serving_config.yaml"
+    if not bundle_path.exists() or not config_path.exists():
+        return
+    import joblib
+    import yaml
+
+    bundle = joblib.load(bundle_path)
+    if not isinstance(bundle, dict) or "routing" in bundle:
+        return
+    cfg = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
+    routing = cfg.get("routing") or {}
+    tiering = cfg.get("decile_tiering") or {}
+    actions = {int(k): str(v) for k, v in (tiering.get("actions") or {}).items()}
+    if not actions:
+        return
+    bundle["routing"] = {
+        "decile_actions": actions,
+        "default_action": str(tiering.get("default_action") or "deprioritize"),
+        "escalate_above": float(routing.get("escalate_above") or 0.90),
+        "alert_destination": str(routing.get("alert_destination") or ""),
+        "noise_destination": str(routing.get("noise_destination") or ""),
+    }
+    joblib.dump(bundle, bundle_path)
+    print(f"[train] routing declared into the bundle: deciles {sorted(actions)} "
+          f"+ default '{bundle['routing']['default_action']}'", flush=True)
+
+
+def attach_class_head(out_dir: Path, input_dir: Path) -> None:
+    """Teach the bundle WHICH attack an alert looks like.
+
+    The main model is a binary attack/benign triage scorer. The flattened
+    training snapshot also carries ``attack_class`` (the raw campaign label),
+    so a small multiclass head fitted on the ATTACK rows can attribute a
+    flagged alert to its most likely class. The platform's serving convention
+    for this is two optional bundle keys — ``class_model`` (an estimator with
+    predict_proba over the SAME feature order as ``features``) and ``classes``
+    (its label names) — reported only when the binary decision is attack.
+    Absent or unfittable (single-class data), the bundle simply omits the keys
+    and serving stays binary — never a fabricated attribution.
+    """
+    bundle_path = out_dir / "lgbm_model.pkl"
+    parquet = input_dir / "training_data.parquet"
+    if not bundle_path.exists() or not parquet.exists():
+        return
+    import joblib
+    import numpy as np
+    import pandas as pd
+
+    bundle = joblib.load(bundle_path)
+    if not isinstance(bundle, dict) or "class_model" in bundle:
+        return {}
+    features = list(bundle.get("features") or [])
+    if not features:
+        return {}
+    frame = pd.read_parquet(parquet)
+    if "attack_class" not in frame.columns or "y_is_attack" not in frame.columns:
+        print("[train] class head skipped: snapshot has no attack_class column", flush=True)
+        return {}
+    attacks = frame[frame["y_is_attack"] == 1]
+    labels = attacks["attack_class"].astype(str).str.strip()
+    classes = sorted(c for c in labels.unique() if c and c.upper() != "BENIGN")
+    if len(classes) < 2:
+        print(f"[train] class head skipped: only {len(classes)} attack class(es) present", flush=True)
+        return {}
+    x = attacks.reindex(columns=features).apply(pd.to_numeric, errors="coerce").fillna(0.0)
+    if bundle.get("log1p_volume") and bundle.get("vol_feature") in x.columns:
+        col = str(bundle["vol_feature"])
+        x[col] = np.log1p(x[col].clip(lower=0))
+    from lightgbm import LGBMClassifier
+
+    seed = int(bundle.get("seed") or 42)
+
+    def make_head():
+        return LGBMClassifier(
+            objective="multiclass", n_estimators=120, num_leaves=31,
+            class_weight="balanced", random_state=seed, verbosity=-1,
+        )
+
+    # Per-class recall MEASURED on a held-out split (the governance gates read
+    # these; a class the holdout could not measure is OMITTED — omission
+    # blocks, which is the correct outcome for an unmeasured claim). The final
+    # head then refits on every attack row.
+    class_recall: dict[str, float] = {}
+    xs = x.to_numpy(dtype=float)
+    ys = labels.to_numpy()
+    try:
+        from sklearn.model_selection import train_test_split
+
+        counts = labels.value_counts()
+        stratify = ys if int(counts.min()) >= 2 else None
+        x_tr, x_ho, y_tr, y_ho = train_test_split(
+            xs, ys, test_size=0.2, random_state=seed, stratify=stratify)
+        probe = make_head()
+        probe.fit(x_tr, y_tr)
+        predicted = probe.predict(x_ho)
+        for cls in sorted(set(y_ho)):
+            mask = y_ho == cls
+            class_recall[str(cls)] = round(float((predicted[mask] == cls).mean()), 4)
+    except Exception as exc:  # noqa: BLE001 — an unmeasurable holdout stays unmeasured
+        print(f"[train] class-head holdout not measurable: {exc}", flush=True)
+
+    head = make_head()
+    head.fit(xs, ys)
+    bundle["class_model"] = head
+    bundle["classes"] = [str(c) for c in head.classes_]
+    joblib.dump(bundle, bundle_path)
+    print(f"[train] class head attached: {len(bundle['classes'])} attack classes "
+          f"({', '.join(bundle['classes'][:5])}{'…' if len(bundle['classes']) > 5 else ''})", flush=True)
+    extras: dict = {"class_head_classes": len(bundle["classes"])}
+    if class_recall:
+        extras["class_recall"] = class_recall
+    return extras
+
+
+def measure_priority_grids(out_dir: Path) -> dict:
+    """Whether the bundle's priority grids are finite — measured at TRAINING.
+
+    The serving plane refuses to interpolate a NaN into an analyst's queue
+    position; this metric lets the ``require_priority_grid_finite`` promotion
+    gate catch a broken grid at training time instead. Absent grids → no key
+    (nothing measured, nothing claimed).
+    """
+    bundle_path = out_dir / "lgbm_model.pkl"
+    if not bundle_path.exists():
+        return {}
+    import joblib
+    import numpy as np
+
+    bundle = joblib.load(bundle_path)
+    if not isinstance(bundle, dict):
+        return {}
+    grids = [bundle.get(k) for k in ("p_grid", "vol_grid", "rank_q")]
+    if not all(g is not None for g in grids):
+        return {}
+    finite = all(np.isfinite(np.asarray(g, dtype=float)).all() for g in grids)
+    if not finite:
+        print("[train] WARNING: priority grids contain non-finite values — "
+              "the promotion gate will refuse this version if "
+              "require_priority_grid_finite is enforced", flush=True)
+    return {"priority_grid_finite": bool(finite)}
+
+
 def main() -> int:
     params = _params()
     input_dir = Path(os.environ.get("ML_INPUT_DIR") or (SLOT / "data"))
@@ -206,6 +360,9 @@ def main() -> int:
                    dataset=profile if profile not in ("", "default", "ids2018")
                    else None)
     declare_serving_transforms(out_dir)
+    declare_routing(out_dir)
+    head_extras = attach_class_head(out_dir, input_dir)
+    head_extras.update(measure_priority_grids(out_dir))
 
     raw_path = out_dir / "metrics.json"
     if not raw_path.exists():
@@ -215,6 +372,9 @@ def main() -> int:
     raw = json.loads(raw_path.read_text(encoding="utf-8"))
 
     gate_metrics = to_gate_metrics(raw)
+    # Head measurements (class recall per class, class count, grid finiteness)
+    # join the gate vocabulary — measured above, omitted when unmeasurable.
+    gate_metrics.update(head_extras)
     # Keep the model's full output for humans, alongside the gate view.
     (out_dir / "metrics_model_native.json").write_text(
         json.dumps(raw, indent=2), encoding="utf-8")
